@@ -1,0 +1,143 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@theme inline {
+  --font-sans: system-ui, sans-serif;
+  --color-background: var(--bg-base);
+  --color-foreground: var(--text-primary);
+  --color-border: var(--border-subtle);
+}
+
+:root {
+  --bg-base: #0B0B0F;
+  --bg-surface: #121318;
+  --bg-surface-alt: #16161A;
+  --border-subtle: #232323;
+  --text-primary: #FFFFFF;
+  --text-secondary: #A0A0A0;
+  --text-muted: #6B6B6B;
+  --accent-gold: #D4AF37;
+  --accent-gold-hover: #E4C45E;
+  --status-success: #4ADE80;
+  --status-progress: #60A5FA;
+  --status-info: #C084FC;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  background: var(--bg-base);
+}
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(circle at top right, rgba(232, 163, 61, 0.08), transparent 34rem),
+    var(--bg-base);
+  color: var(--text-primary);
+  font-family: system-ui, sans-serif;
+}
+
+a {
+  text-decoration: none;
+}
+
+::selection {
+  background: rgba(232, 163, 61, 0.3);
+}
+
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  background-clip: content-box;
+}
+
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-built_in,
+.hljs-name {
+  color: #E4C45E;
+}
+
+.hljs-string,
+.hljs-title,
+.hljs-section,
+.hljs-attribute {
+  color: #8BD5CA;
+}
+
+.hljs-number,
+.hljs-literal,
+.hljs-symbol,
+.hljs-bullet {
+  color: #B7A9FF;
+}
+
+.hljs-comment,
+.hljs-quote {
+  color: #6B7280;
+  font-style: italic;
+}
+
+.hljs-variable,
+.hljs-template-variable,
+.hljs-params {
+  color: #F3B6C6;
+}
+
+.hljs-property,
+.hljs-tag,
+.hljs-attr {
+  color: #93C5FD;
+}
+
+.section-container {
+  width: min(100%, 1280px);
+  margin: 0 auto;
+  padding: 96px 64px;
+}
+
+.hero-section {
+  padding-top: 72px;
+  padding-bottom: 72px;
+}
+
+@media (max-width: 767px) {
+  .section-container {
+    padding: 56px 24px;
+  }
+
+  .hero-section {
+    padding-top: 40px;
+    padding-bottom: 48px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

@@ -1,0 +1,68 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keys } from "@/features/shared/queryKeys";
+import { dashboardService } from "@/features/dashboard/dashboard.service";
+import { homeService } from "@/features/home/home.service";
+import { skillsService } from "@/features/skills/skills.service";
+import { projectsService } from "@/features/projects/projects.service";
+import { blogsService } from "@/features/blogs/blogs.service";
+import { contactService } from "@/features/contact/contact.service";
+import { mediaService } from "@/features/media/media.service";
+import { experienceService } from "@/features/experience/experience.service";
+import { aboutService } from "@/features/about/about.service";
+import { settingsService } from "@/features/settings/settings.service";
+import { seoService } from "@/features/seo/seo.service";
+import { usersService } from "@/features/users/users.service";
+import { auditLogsService } from "@/features/audit-logs/auditLogs.service";
+
+const invalidate = (client: ReturnType<typeof useQueryClient>, key: readonly unknown[]) => ({ onSuccess: () => client.invalidateQueries({ queryKey: key }) });
+
+export const useDashboardSummary = () => useQuery({ queryKey: keys.dashboard, queryFn: dashboardService.summary, staleTime: 30000 });
+export const useHome = () => useQuery({ queryKey: keys.home, queryFn: homeService.get });
+export const useUpdateHome = () => { const c = useQueryClient(); return useMutation({ mutationFn: homeService.update, ...invalidate(c, keys.home) }); };
+export const useSkills = () => useQuery({ queryKey: keys.skills, queryFn: skillsService.get });
+export const useUpdateSkills = () => { const c = useQueryClient(); return useMutation({ mutationFn: skillsService.update, ...invalidate(c, keys.skills) }); };
+export const useProjectsHeader = () => useQuery({
+  queryKey: keys.projectsHeader,
+  queryFn: projectsService.getHeader,
+  refetchOnWindowFocus: false,
+});
+export const useUpdateProjectsHeader = () => { const c = useQueryClient(); return useMutation({ mutationFn: projectsService.updateHeader, onSuccess: () => { void c.invalidateQueries({ queryKey: keys.projectsHeader }); } }); };
+export const useUploadProjectsHeaderImage = () => useMutation({ mutationFn: projectsService.uploadHeaderImage });
+export const useProjects = () => useQuery({ queryKey: keys.projects, queryFn: projectsService.list, staleTime: 30000 });
+export const useCreateProject = () => { const c = useQueryClient(); return useMutation({ mutationFn: projectsService.create, ...invalidate(c, keys.projects) }); };
+export const useUpdateProject = () => { const c = useQueryClient(); return useMutation({ mutationFn: ({ slug, body }: any) => projectsService.update(slug, body), ...invalidate(c, keys.projects) }); };
+export const useDeleteProject = () => { const c = useQueryClient(); return useMutation({ mutationFn: projectsService.delete, ...invalidate(c, keys.projects) }); };
+export const usePublishProject = () => { const c = useQueryClient(); return useMutation({ mutationFn: ({ slug, publishStatus }: any) => projectsService.publish(slug, publishStatus), ...invalidate(c, keys.projects) }); };
+export const useBlogs = () => useQuery({ queryKey: keys.blogs, queryFn: blogsService.list, staleTime: 30000 });
+export const useCreateBlog = () => { const c = useQueryClient(); return useMutation({ mutationFn: blogsService.create, ...invalidate(c, keys.blogs) }); };
+export const useUpdateBlog = () => { const c = useQueryClient(); return useMutation({ mutationFn: ({ slug, body }: any) => blogsService.update(slug, body), ...invalidate(c, keys.blogs) }); };
+export const usePublishBlog = () => { const c = useQueryClient(); return useMutation({ mutationFn: ({ slug, publishStatus }: any) => blogsService.publish(slug, publishStatus), ...invalidate(c, keys.blogs) }); };
+export const useDeleteBlog = () => { const c = useQueryClient(); return useMutation({ mutationFn: blogsService.delete, ...invalidate(c, keys.blogs) }); };
+export const useAddBlogBlock = () => { const c = useQueryClient(); return useMutation({ mutationFn: ({ slug, block }: any) => blogsService.addBlock(slug, block), ...invalidate(c, keys.blogs) }); };
+export const useContact = () => useQuery({ queryKey: keys.contact, queryFn: contactService.get });
+export const useUpdateContact = () => { const c = useQueryClient(); return useMutation({ mutationFn: contactService.update, ...invalidate(c, keys.contact) }); };
+export const useMessages = () => useQuery({ queryKey: keys.messages, queryFn: contactService.messages, refetchInterval: 60000 });
+export const useUpdateMessageStatus = () => { const c = useQueryClient(); return useMutation({ mutationFn: ({ id, status }: any) => contactService.updateMessageStatus(id, status), ...invalidate(c, keys.messages) }); };
+export const useMeetingRequests = () => useQuery({ queryKey: keys.meetingRequests, queryFn: contactService.meetingRequests, refetchInterval: 60000 });
+export const useUpdateMeetingStatus = () => { const c = useQueryClient(); return useMutation({ mutationFn: ({ id, status }: any) => contactService.updateMeetingStatus(id, status), ...invalidate(c, keys.meetingRequests) }); };
+export const useMediaAssets = (folder?: string) => useQuery({ queryKey: [...keys.media, folder], queryFn: () => mediaService.list(folder), staleTime: 30000 });
+export const useUploadMedia = () => { const c = useQueryClient(); return useMutation({ mutationFn: mediaService.upload, ...invalidate(c, keys.media) }); };
+export const useDeleteMedia = () => { const c = useQueryClient(); return useMutation({ mutationFn: mediaService.delete, ...invalidate(c, keys.media) }); };
+export const useExperience = () => useQuery({ queryKey: keys.experience, queryFn: experienceService.list });
+export const useCreateExperience = () => { const c = useQueryClient(); return useMutation({ mutationFn: experienceService.create, ...invalidate(c, keys.experience) }); };
+export const useUpdateExperience = () => { const c = useQueryClient(); return useMutation({ mutationFn: ({ id, body }: any) => experienceService.update(id, body), ...invalidate(c, keys.experience) }); };
+export const useDeleteExperience = () => { const c = useQueryClient(); return useMutation({ mutationFn: experienceService.delete, ...invalidate(c, keys.experience) }); };
+export const useAbout = () => useQuery({ queryKey: keys.about, queryFn: aboutService.get });
+export const useUpdateAbout = () => { const c = useQueryClient(); return useMutation({ mutationFn: aboutService.update, ...invalidate(c, keys.about) }); };
+export const useSettings = () => useQuery({ queryKey: keys.settings, queryFn: settingsService.get });
+export const useUpdateSettings = () => { const c = useQueryClient(); return useMutation({ mutationFn: settingsService.update, ...invalidate(c, keys.settings) }); };
+export const useSeo = () => useQuery({ queryKey: keys.seo, queryFn: seoService.list });
+export const useCreateSeo = () => { const c = useQueryClient(); return useMutation({ mutationFn: seoService.create, ...invalidate(c, keys.seo) }); };
+export const useUpdateSeo = () => { const c = useQueryClient(); return useMutation({ mutationFn: ({ id, body }: any) => seoService.update(id, body), ...invalidate(c, keys.seo) }); };
+export const useDeleteSeo = () => { const c = useQueryClient(); return useMutation({ mutationFn: seoService.delete, ...invalidate(c, keys.seo) }); };
+export const useUsers = () => useQuery({ queryKey: keys.users, queryFn: usersService.listUsers });
+export const useCreateUser = () => { const c = useQueryClient(); return useMutation({ mutationFn: usersService.createUser, ...invalidate(c, keys.users) }); };
+export const useUpdateUser = () => { const c = useQueryClient(); return useMutation({ mutationFn: ({ id, body }: any) => usersService.updateUser(id, body), ...invalidate(c, keys.users) }); };
+export const useRoles = () => useQuery({ queryKey: keys.roles, queryFn: usersService.listRoles });
+export const useUpdateRole = () => { const c = useQueryClient(); return useMutation({ mutationFn: ({ id, body }: any) => usersService.updateRole(id, body), ...invalidate(c, keys.roles) }); };
+export const useAuditLogs = () => useQuery({ queryKey: keys.auditLogs, queryFn: auditLogsService.list });

@@ -1,0 +1,51 @@
+import type { PublishStatus, NavItem } from "@/types/common.types";
+
+export type ProjectCategory = "Full Stack" | "Frontend" | "Backend" | "AI" | "Cloud" | "Learning";
+export type ProjectStatus = "completed" | "in-progress" | "production";
+export type ProjectHeaderShowcaseImage = {
+  imageUrl: string;
+  label: string;
+  order: 1 | 2 | 3 | 4 | 5;
+};
+export type ProjectHeader = {
+  _id?: string;
+  badge: string;
+  title: string;
+  highlightText: string;
+  description: string;
+  showcaseImages: ProjectHeaderShowcaseImage[];
+};
+export type Project = {
+  _id?: string;
+  id?: string;
+  slug: string;
+  orderIndex: number;
+  title: string;
+  tagline: string;
+  shortDescription: string;
+  description: string;
+  status: ProjectStatus;
+  category: ProjectCategory;
+  thumbnailUrl: string;
+  techTags: string[];
+  highlights: string[];
+  liveDemoUrl: string;
+  githubUrl: string;
+  durationLabel: string;
+  role: string;
+  lastUpdatedAt: string;
+  techIcons: string[];
+  readmeMarkdown: string;
+  projectStructure: string;
+  techStackTable: Array<{ category: string; technologies: string }>;
+  gallery: Array<{ url: string; caption?: string; alt?: string; title?: string; description?: string }>;
+  architectureNotes: string;
+  challenges: string[];
+  solutions: string[];
+  learningOutcomes: string[];
+  architectureDiagramUrl?: string;
+  isFeatured: boolean;
+  publishStatus: PublishStatus;
+  previousProject?: NavItem;
+  nextProject?: NavItem;
+};
