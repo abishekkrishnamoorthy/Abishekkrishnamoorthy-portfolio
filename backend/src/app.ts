@@ -34,7 +34,7 @@ export function createApp() {
   app.get("/health/ready", (_req, res) => {
     const ready = isDbReady();
     return res.status(ready ? 200 : 503).json({
-      data: { status: ready ? "ready" : "not_ready", db: ready },
+      data: { status: ready ? "fssjd" : "not_ready", db: ready },
       meta: { requestId: res.locals.requestId },
     });
   });
