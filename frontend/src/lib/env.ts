@@ -18,9 +18,11 @@ const required = (key: string, fallback = "") => {
   }
   return value;
 };
+console.log("NEXT_PUBLIC_API_URL =", process.env.NEXT_PUBLIC_API_URL);
+console.log("NEXT_PUBLIC_SITE_URL =", process.env.NEXT_PUBLIC_SITE_URL);
 
 export const env: Env = {
-  API_URL: required("NEXT_PUBLIC_API_URL", "http://localhost:4000/api"),
+  API_URL: process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api",
   API_TIMEOUT_MS: Number(required("NEXT_PUBLIC_API_TIMEOUT_MS", "10000")),
   APP_NAME: required("NEXT_PUBLIC_APP_NAME", "Abishek Krishnamoorthy - Portfolio"),
   SITE_URL: required("NEXT_PUBLIC_SITE_URL", "https://abishekkrishnamoorthy.online"),

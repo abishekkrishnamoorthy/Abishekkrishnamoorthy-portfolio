@@ -43,6 +43,6 @@ export function createApp() {
 
   app.use(notFoundMiddleware);
   app.use(errorHandler);
-
+  console.log("✅ workflow Connected");
   return app;
 }

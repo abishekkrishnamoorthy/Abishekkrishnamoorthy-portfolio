@@ -4,7 +4,7 @@ import type { ApiError } from "@/types/common.types";
 import { ApiError as NormalizedApiError } from "@/types/common.types";
 
 type ApiErrorBody = { error?: { message?: string; code?: string } };
-
+console.log("env.API_URL =", env.API_URL);
 export const apiClient = axios.create({
   baseURL: env.API_URL,
   timeout: env.API_TIMEOUT_MS,
