@@ -5,6 +5,7 @@ import { Bot, Menu } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/common/Button";
 import { navigationLinks } from "@/constants/navigation";
 import { useNavigation } from "@/context/NavigationContext";
@@ -13,9 +14,28 @@ import type { Profile } from "@/types/profile.types";
 export function Navbar({ profile }: { profile?: Profile }) {
   const pathname = usePathname();
   const { openMobileNav, openAssistant } = useNavigation();
+  const isHome = pathname === "/";
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const updateScrollState = () => setIsScrolled(window.scrollY > 8);
+
+    updateScrollState();
+    window.addEventListener("scroll", updateScrollState, { passive: true });
+
+    return () => window.removeEventListener("scroll", updateScrollState);
+  }, []);
+
+  const isTransparentHomeHeader = isHome && !isScrolled;
 
   return (
-    <header className="sticky top-0 z-30 border-b border-[var(--border-subtle)] bg-[rgba(10,10,10,0.94)] backdrop-blur-md">
+    <header
+      className={`sticky top-0 z-30 border-b backdrop-blur-md transition-colors duration-300 ${
+        isTransparentHomeHeader
+          ? "border-transparent bg-transparent"
+          : "border-[var(--border-subtle)] bg-[rgba(10,10,10,0.94)]"
+      }`}
+    >
       <div className="mx-auto flex h-16 max-w-[1280px] items-center justify-between px-6 md:h-[68px] md:px-16">
         <Link href="/" className="flex items-center gap-3" aria-label="Home">
           <Image src="/assets/branding/logo.png" alt="AK logo" width={42} height={42} className="h-9 w-9 object-contain md:h-10 md:w-10" />

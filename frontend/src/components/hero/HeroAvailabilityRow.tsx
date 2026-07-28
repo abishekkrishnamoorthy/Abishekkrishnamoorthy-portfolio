@@ -12,7 +12,7 @@ export function HeroAvailabilityRow({
   if (!status && !socials.length) return null;
 
   return (
-    <div className="flex flex-wrap items-center gap-4">
+    <div className="flex flex-wrap items-center justify-center gap-4 md:justify-start">
       {status ? (
         <p className="inline-flex items-center gap-2 text-sm font-medium text-[var(--text-secondary)]">
           <span className="h-2 w-2 rounded-full bg-[var(--accent-gold)]" aria-hidden="true" />
@@ -38,4 +38,3 @@ export function HeroAvailabilityRow({
     </div>
   );
 }
-

@@ -24,7 +24,9 @@
   --status-info: #C084FC;
 }
 
-* {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
@@ -126,8 +128,43 @@ a {
   }
 
   .hero-section {
-    padding-top: 40px;
-    padding-bottom: 48px;
+    padding-top: 0;
+    padding-bottom: 40px;
+  }
+
+  .hero-portrait-mask {
+    mask-image: none !important;
+    -webkit-mask-image: none !important;
+  }
+
+  .hero-mobile-portrait-card {
+    animation: hero-card-float 6s ease-in-out infinite;
+  }
+
+  .hero-mobile-card-glow {
+    animation: hero-card-glow 7s ease-in-out infinite;
+  }
+}
+
+@keyframes hero-card-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes hero-card-glow {
+  0%,
+  100% {
+    opacity: 0.68;
+    transform: translate(-50%, -50%) scale(0.96);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.05);
   }
 }
 
