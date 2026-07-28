@@ -30,4 +30,4 @@ jobs:
 
             npm install
 
-            pm2 restart YOUR_PM2_PROCESS_NAME
+            pm2 restart portfolio-backend
