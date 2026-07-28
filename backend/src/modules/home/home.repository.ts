@@ -8,6 +8,9 @@ export const defaultHome = {
     highlightedHeadline: "digital experiences.",
     subheadline:
       "Full-stack developer focused on AI-powered products, cloud-native systems, and polished user experiences that move cleanly from idea to production.",
+    portraitUrl: "/assets/hero/portriat.png",
+    portraitAlt: "Abishek Krishnamoorthy portrait",
+    backgroundUrl: "/assets/hero/skyline.png",
     cta: { primaryLabel: "Explore Projects", secondaryLabel: "Contact Me" },
     status: { enabled: true, text: "Open to opportunities" },
     socialLinks: {
@@ -34,6 +37,18 @@ export const homeRepository = {
     const hero = home.hero;
     if (!hero.roleBadge) {
       hero.roleBadge = defaults.roleBadge;
+      changed = true;
+    }
+    if (!hero.portraitUrl) {
+      hero.portraitUrl = defaults.portraitUrl;
+      changed = true;
+    }
+    if (!hero.portraitAlt) {
+      hero.portraitAlt = defaults.portraitAlt;
+      changed = true;
+    }
+    if (!hero.backgroundUrl) {
+      hero.backgroundUrl = defaults.backgroundUrl;
       changed = true;
     }
     if (!hero.status) {

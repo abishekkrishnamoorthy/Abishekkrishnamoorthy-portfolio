@@ -18,6 +18,9 @@ export const homeSchema = z.object({
     headline: z.string().trim().min(10).max(60),
     highlightedHeadline: z.string().trim().min(5).max(32),
     subheadline: z.string().trim().min(40).max(220),
+    portraitUrl: z.string().trim().min(1).max(300),
+    portraitAlt: z.string().trim().min(2).max(120),
+    backgroundUrl: z.string().trim().min(1).max(300),
     cta: z.object({
       primaryLabel: z.string().trim().min(2).max(20),
       secondaryLabel: z.string().trim().min(2).max(20),

@@ -7,6 +7,9 @@ export type HomeHero = {
   headline: string;
   highlightedHeadline: string;
   subheadline: string;
+  portraitUrl: string;
+  portraitAlt: string;
+  backgroundUrl: string;
   cta: {
     primaryLabel: string;
     secondaryLabel: string;
