@@ -9,6 +9,7 @@ on:
 
 jobs:
   deploy:
+    name: Build & Deploy CMS
     runs-on: ubuntu-latest
 
     defaults:
@@ -26,19 +27,48 @@ jobs:
           cache: npm
           cache-dependency-path: cms-frontend/package-lock.json
 
+      - name: 📝 Generate Production .env
+        run: |
+          echo "========================================"
+          echo "Generating Production Environment File"
+          echo "========================================"
+
+          cat > .env <<EOF
+          VITE_API_URL=${{ secrets.VITE_API_URL }}
+          VITE_SITE_URL=${{ secrets.VITE_SITE_URL }}
+          VITE_APP_NAME=${{ secrets.VITE_APP_NAME }}
+          EOF
+
+          echo "✅ .env generated successfully"
+          echo "Available Variables:"
+          grep "^VITE_" .env | cut -d= -f1
+
       - name: 📦 Install Dependencies
         run: |
-          echo "======================================"
-          echo "Installing Dependencies..."
-          echo "======================================"
+          echo "========================================"
+          echo "Installing Dependencies"
+          echo "========================================"
+
           npm install
 
       - name: 🏗️ Build CMS
         run: |
-          echo "======================================"
-          echo "Building CMS..."
-          echo "======================================"
+          echo "========================================"
+          echo "Building Production Bundle"
+          echo "========================================"
+
           npm run build
+
+      - name: 📂 Verify Build Output
+        run: |
+          echo "========================================"
+          echo "Verifying Build Output"
+          echo "========================================"
+
+          pwd
+          ls -la
+          ls -la dist
+          du -sh dist
 
       - name: ☁️ Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -49,23 +79,33 @@ jobs:
 
       - name: 🚀 Upload Build to S3
         run: |
-          echo "======================================"
-          echo "Uploading dist to S3..."
-          echo "======================================"
+          echo "========================================"
+          echo "Uploading Build to S3"
+          echo "========================================"
+
           aws s3 sync dist/ s3://${{ secrets.S3_BUCKET_NAME }} --delete
+
+          echo "✅ Upload Completed"
 
       - name: 🔄 Invalidate CloudFront Cache
         run: |
-          echo "======================================"
-          echo "Creating CloudFront Invalidation..."
-          echo "======================================"
+          echo "========================================"
+          echo "Creating CloudFront Invalidation"
+          echo "========================================"
 
           aws cloudfront create-invalidation \
             --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} \
             --paths "/*"
 
-      - name: ✅ Deployment Complete
+          echo "✅ CloudFront Cache Invalidated"
+
+      - name: 📋 Deployment Summary
         run: |
-          echo "======================================"
-          echo "CMS Deployment Completed Successfully"
-          echo "======================================"
+          echo "========================================"
+          echo "🎉 CMS Deployment Successful"
+          echo "========================================"
+          echo "Repository : $GITHUB_REPOSITORY"
+          echo "Branch     : $GITHUB_REF_NAME"
+          echo "Commit SHA : $GITHUB_SHA"
+          echo "Actor      : $GITHUB_ACTOR"
+          echo "Workflow   : GitHub Actions"
