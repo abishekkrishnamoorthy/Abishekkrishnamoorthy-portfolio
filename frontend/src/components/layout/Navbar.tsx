@@ -36,7 +36,7 @@ export function Navbar({ profile }: { profile?: Profile }) {
           : "border-[var(--border-subtle)] bg-[rgba(10,10,10,0.94)]"
       }`}
     >
-      <div className="mx-auto flex h-16 w-full max-w-[1280px] min-w-0 items-center justify-between gap-4 px-6 md:h-[68px] md:px-16">
+      <div className="mx-auto flex h-16 w-full max-w-[1280px] min-w-0 items-center justify-between gap-4 px-4 md:h-[68px] md:px-6 lg:px-8">
         <Link href="/" className="flex min-w-0 shrink-0 items-center gap-3" aria-label="Home">
           <Image src="/assets/branding/logo.png" alt="AK logo" width={42} height={42} className="h-9 w-9 object-contain md:h-10 md:w-10" />
           <span className="text-lg font-bold text-white">AK.</span>

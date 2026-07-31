@@ -135,7 +135,7 @@ svg {
 .section-container {
   width: min(100%, 1280px);
   margin: 0 auto;
-  padding: 96px 64px;
+  padding: 96px 32px;
 }
 
 .hero-section {
@@ -145,7 +145,7 @@ svg {
 
 @media (max-width: 767px) {
   .section-container {
-    padding: 56px 24px;
+    padding: 56px 16px;
   }
 
   .hero-section {
@@ -164,6 +164,13 @@ svg {
 
   .hero-mobile-card-glow {
     animation: hero-card-glow 7s ease-in-out infinite;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .section-container {
+    padding-right: 24px;
+    padding-left: 24px;
   }
 }
 

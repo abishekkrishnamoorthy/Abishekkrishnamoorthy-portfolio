@@ -54,7 +54,7 @@ export function HeroSection({ hero }: { hero: HomeHero }) {
           </div>
         </div>
       </motion.div>
-      <div className="relative z-10 mx-auto grid w-[93%] max-w-[1440px] grid-cols-1 content-start gap-0 pt-7 md:h-full md:min-h-0 md:w-full md:grid-cols-[minmax(0,60fr)_minmax(280px,40fr)] md:items-end md:gap-7 md:px-[clamp(24px,5vw,88px)] md:pt-[clamp(96px,11vh,120px)] md:pb-0 lg:h-auto lg:min-h-[calc(100svh-68px)] lg:grid-cols-[minmax(0,56fr)_minmax(330px,44fr)] lg:gap-10 lg:pb-[clamp(28px,4vh,48px)]">
+      <div className="relative z-10 mx-auto grid w-full max-w-[1440px] grid-cols-1 content-start gap-0 px-4 pt-7 md:h-full md:min-h-0 md:grid-cols-[minmax(0,60fr)_minmax(280px,40fr)] md:items-end md:gap-7 md:px-6 md:pt-[clamp(96px,11vh,120px)] md:pb-0 lg:h-auto lg:min-h-[calc(100svh-68px)] lg:grid-cols-[minmax(0,56fr)_minmax(330px,44fr)] lg:gap-10 lg:px-8 lg:pb-[clamp(28px,4vh,48px)]">
         <motion.div className="relative z-20 min-w-0 max-w-full text-center md:max-w-[min(600px,100%)] md:self-center md:pb-[clamp(18px,3.8vh,44px)] md:text-left lg:max-w-[580px]" {...(shouldAnimate ? heroMotion.container : {})}>
           <motion.div {...motionProps(shouldAnimate, "eyebrow")}>
             <HeroEyebrow text={hero.roleBadge} />

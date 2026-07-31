@@ -9,7 +9,7 @@ import type { Profile } from "@/types/profile.types";
 export function Footer({ profile }: { profile?: Profile }) {
   return (
     <footer className="border-t border-[var(--border-subtle)] bg-[var(--bg-base)]">
-      <div className="mx-auto max-w-[1280px] px-6 py-14 md:px-16">
+      <div className="mx-auto max-w-[1280px] px-4 py-14 md:px-6 lg:px-8">
         <div className="grid gap-10 md:grid-cols-[1.5fr_1fr_1fr_1fr]">
           <div>
             <div className="flex items-center gap-3">
