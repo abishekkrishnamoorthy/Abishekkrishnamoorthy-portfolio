@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { setUnauthenticatedHandler } from "@/lib/api/axiosClient";
-import { clearAccessToken, setAccessToken } from "@/lib/auth/tokenStore";
+import { clearAccessToken, getAccessToken, setAccessToken } from "@/lib/auth/tokenStore";
 import type { CurrentUser } from "@/lib/auth/permissions";
 import { authService, type LoginResponse } from "@/features/auth/auth.service";
 
@@ -15,9 +15,26 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 let bootRefreshPromise: Promise<{ accessToken: string }> | null = null;
 let loginPromise: Promise<LoginResponse> | null = null;
 
+function currentRedirectPath() {
+  return `${window.location.pathname}${window.location.search}${window.location.hash}`;
+}
+
+function decodeJwtPayload(token: string) {
+  const payload = token.split(".")[1];
+  if (!payload) throw new Error("Token payload is missing");
+  const normalized = payload.replace(/-/g, "+").replace(/_/g, "/");
+  const padded = normalized.padEnd(normalized.length + ((4 - (normalized.length % 4)) % 4), "=");
+  return JSON.parse(atob(padded));
+}
+
 function userFromToken(token: string): CurrentUser {
-  const payload = JSON.parse(atob(token.split(".")[1] ?? ""));
+  const payload = decodeJwtPayload(token);
   return { id: payload.sub, name: payload.role, email: "", role: payload.role };
+}
+
+function tokenIsExpired(token: string) {
+  const payload = decodeJwtPayload(token);
+  return typeof payload.exp !== "number" || payload.exp * 1000 <= Date.now();
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -30,7 +47,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       clearAccessToken();
       setUser(null);
-      window.location.assign(`/login?redirect=${encodeURIComponent(location.pathname)}`);
+      window.location.assign(`/login?redirect=${encodeURIComponent(currentRedirectPath())}`);
     }
   }, []);
 
@@ -38,6 +55,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let active = true;
+    const storedToken = getAccessToken();
+    if (storedToken) {
+      try {
+        if (!tokenIsExpired(storedToken)) {
+          setUser(userFromToken(storedToken));
+          setBooting(false);
+          return () => {
+            active = false;
+          };
+        }
+      } catch {
+        // Fall through to refresh below after clearing unusable stored auth.
+      }
+      clearAccessToken();
+    }
+
     bootRefreshPromise ??= authService.refresh().finally(() => {
       bootRefreshPromise = null;
     });

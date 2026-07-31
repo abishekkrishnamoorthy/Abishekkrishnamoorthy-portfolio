@@ -6,7 +6,7 @@ export function RequireAuth() {
   const { user, booting } = useAuth();
   const location = useLocation();
   if (booting) return <div className="flex min-h-screen items-center justify-center bg-canvas text-secondary">Checking session...</div>;
-  if (!user) return <Navigate to={`/login?redirect=${encodeURIComponent(location.pathname)}`} replace />;
+  if (!user) return <Navigate to={`/login?redirect=${encodeURIComponent(`${location.pathname}${location.search}${location.hash}`)}`} replace />;
   return <Outlet />;
 }
 

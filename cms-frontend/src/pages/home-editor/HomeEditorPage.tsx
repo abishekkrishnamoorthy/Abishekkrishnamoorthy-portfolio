@@ -22,9 +22,15 @@ export default function HomeEditorPage() {
   const uploadMedia = useUploadMedia();
   const saveWorkflow = useSaveWorkflow();
   const form = useForm<HomeFormValues>({ resolver: zodResolver(homeSchema) });
+  const hasInitializedForm = useRef(false);
   const portraitUrl = useWatch({ control: form.control, name: "hero.portraitUrl" });
   const backgroundUrl = useWatch({ control: form.control, name: "hero.backgroundUrl" });
-  useEffect(() => { if (query.data) form.reset(query.data); }, [form, query.data]);
+  useEffect(() => {
+    if (query.data && !hasInitializedForm.current) {
+      form.reset(query.data);
+      hasInitializedForm.current = true;
+    }
+  }, [form, query.data]);
 
   async function uploadHeroAsset(file: File) {
     const asset = await uploadMedia.mutateAsync({ file, folder: "portfolio/home/hero" });
@@ -34,7 +40,17 @@ export default function HomeEditorPage() {
   }
 
   return (
-    <form className="grid gap-5" onSubmit={form.handleSubmit((values) => saveWorkflow.save(() => update.mutateAsync(values)), saveWorkflow.validationFailed)}>
+    <form
+      className="grid gap-5"
+      onSubmit={form.handleSubmit(
+        (values) =>
+          saveWorkflow.save(async () => {
+            const savedHome = await update.mutateAsync(values);
+            form.reset(savedHome);
+          }),
+        saveWorkflow.validationFailed,
+      )}
+    >
       <FormSection title="Hero">
         <FormField label="Role Badge" error={form.formState.errors.hero?.roleBadge?.message}><Input {...form.register("hero.roleBadge")} /></FormField>
         <FormField label="Headline" error={form.formState.errors.hero?.headline?.message}><Input {...form.register("hero.headline")} /></FormField>

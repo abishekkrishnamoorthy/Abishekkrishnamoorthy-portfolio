@@ -12,6 +12,11 @@ import { ApiError } from "@/lib/api/envelope";
 
 const loginSchema = z.object({ email: z.string().email().max(120), password: z.string().min(1).max(128) });
 
+function safeRedirectTarget(value: string | null) {
+  if (!value || !value.startsWith("/") || value.startsWith("//")) return "/dashboard";
+  return value;
+}
+
 export default function LoginPage() {
   const auth = useAuth();
   const navigate = useNavigate();
@@ -21,7 +26,7 @@ export default function LoginPage() {
   const submit = form.handleSubmit(async (values) => {
     try {
       await auth.login(values.email, values.password);
-      navigate(params.get("redirect") || "/dashboard", { replace: true });
+      navigate(safeRedirectTarget(params.get("redirect")), { replace: true });
     } catch (error: unknown) {
       const message = error instanceof ApiError && error.status === 429
         ? "Too many login attempts. Please wait a minute and try again."
