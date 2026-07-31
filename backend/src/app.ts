@@ -22,7 +22,7 @@ export function createApp() {
     next();
   });
   app.use(helmet());
-  app.use(cors({ origin: [env.PUBLIC_SITE_ORIGIN, env.CMS_ORIGIN], credentials: true }));
+  app.use(cors({ origin: env.ALLOWED_ORIGINS, credentials: true }));
   app.use(compression());
   app.use(cookieParser(env.COOKIE_SECRET));
   app.use(express.json({ limit: "8mb" }));

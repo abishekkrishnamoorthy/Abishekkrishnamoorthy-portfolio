@@ -143,8 +143,8 @@ export function AssistantModal({ profile }: { profile?: Profile }) {
               aria-labelledby="assistant-title"
               aria-describedby="assistant-description"
               className={cn(
-                "relative flex h-[95dvh] w-[calc(100vw-16px)] max-w-[1100px] flex-col overflow-hidden rounded-[24px] border border-[rgba(255,255,255,0.08)] bg-[rgba(11,11,15,0.92)] shadow-[0_32px_100px_rgba(0,0,0,0.68)] backdrop-blur-2xl",
-                "md:h-[82vh] md:w-[92vw]",
+                "relative flex h-[95dvh] w-full max-w-[calc(100%-16px)] flex-col overflow-hidden rounded-[24px] border border-[rgba(255,255,255,0.08)] bg-[rgba(11,11,15,0.92)] shadow-[0_32px_100px_rgba(0,0,0,0.68)] backdrop-blur-2xl",
+                "md:h-[82vh] md:max-w-[min(1100px,92%)]",
               )}
               initial={{ opacity: 0, scale: 0.96, y: 16 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}

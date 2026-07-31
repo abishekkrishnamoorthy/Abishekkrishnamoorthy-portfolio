@@ -36,12 +36,12 @@ export function Navbar({ profile }: { profile?: Profile }) {
           : "border-[var(--border-subtle)] bg-[rgba(10,10,10,0.94)]"
       }`}
     >
-      <div className="mx-auto flex h-16 max-w-[1280px] items-center justify-between px-6 md:h-[68px] md:px-16">
-        <Link href="/" className="flex items-center gap-3" aria-label="Home">
+      <div className="mx-auto flex h-16 w-full max-w-[1280px] min-w-0 items-center justify-between gap-4 px-6 md:h-[68px] md:px-16">
+        <Link href="/" className="flex min-w-0 shrink-0 items-center gap-3" aria-label="Home">
           <Image src="/assets/branding/logo.png" alt="AK logo" width={42} height={42} className="h-9 w-9 object-contain md:h-10 md:w-10" />
           <span className="text-lg font-bold text-white">AK.</span>
         </Link>
-        <nav className="hidden items-center gap-6 md:flex" aria-label="Primary navigation">
+        <nav className="hidden min-w-0 flex-1 items-center justify-center gap-6 md:flex" aria-label="Primary navigation">
           {navigationLinks.map((link) => {
             const active = link.href === "/" ? pathname === "/" : link.routable && pathname.startsWith(link.href);
             return (
@@ -52,7 +52,7 @@ export function Navbar({ profile }: { profile?: Profile }) {
             );
           })}
         </nav>
-        <div className="hidden items-center gap-3 md:flex">
+        <div className="hidden min-w-0 shrink-0 items-center gap-3 md:flex">
           <Button className="min-h-9 px-4" variant="secondary" size="sm" icon={<Bot className="h-4 w-4" />} onClick={openAssistant}>
             About Me AI
           </Button>
