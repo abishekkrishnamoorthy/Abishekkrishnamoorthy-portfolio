@@ -1,0 +1,103 @@
+name: Deploy Frontend
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "frontend/**"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 🚀 Deploy Frontend to EC2
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            echo "========================================"
+            echo "🚀 Portfolio Frontend Deployment Started"
+            echo "========================================"
+
+            echo ""
+            echo "📍 Current User"
+            whoami
+
+            echo ""
+            echo "📍 Current Directory"
+            pwd
+
+            echo ""
+            echo "📍 Moving to Project Directory..."
+            cd /home/ubuntu/Abishekkrishnamoorthy-portfolio || exit 1
+
+            echo ""
+            echo "📍 Current Git Branch"
+            git branch
+
+            echo ""
+            echo "📍 Fetching Latest Changes..."
+            git fetch origin
+
+            echo ""
+            echo "📍 Pulling Latest Code..."
+            git pull origin main || exit 1
+
+            echo ""
+            echo "📍 Moving to Frontend Directory..."
+            cd frontend || exit 1
+
+            echo ""
+            echo "📍 Current Directory"
+            pwd
+
+            echo ""
+            echo "📍 Node Version"
+            node -v
+
+            echo ""
+            echo "📍 NPM Version"
+            npm -v
+
+            echo ""
+            echo "📍 Installing Dependencies..."
+            npm install || exit 1
+
+            echo ""
+            echo "📍 Building Next.js Application..."
+            npm run build || exit 1
+
+            echo ""
+            echo "📍 Build Completed Successfully"
+
+            echo ""
+            echo "📍 Restarting PM2 Process..."
+            pm2 restart portfolio-frontend || exit 1
+
+            echo ""
+            echo "📍 Saving PM2 Process List..."
+            pm2 save
+
+            echo ""
+            echo "📍 PM2 Status"
+            pm2 list
+
+            echo ""
+            echo "📍 Waiting for Application..."
+            sleep 5
+
+            echo ""
+            echo "📍 Checking Application Status..."
+            curl -I https://abishekkrishnamoorthy.online
+
+            echo ""
+            echo "========================================"
+            echo "✅ Frontend Deployment Completed"
+            echo "========================================"
