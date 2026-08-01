@@ -26,7 +26,11 @@ describe("SEO metadata helpers", () => {
     expect(metadata.description).toBe("Project description");
     expect(metadata.alternates).toEqual({ canonical: "https://example.com/projects/qconnect" });
     expect(metadata.robots).toEqual({ index: false, follow: true });
-    expect(metadata.other).toEqual({ "google-site-verification": "token" });
+    expect(metadata.verification).toEqual({ google: "token" });
+  });
+
+  it("omits Google verification metadata when no code exists", () => {
+    expect(buildMetadata({ ...resolved, googleVerificationCode: undefined }).verification).toBeUndefined();
   });
 
   it("uses content fallback only when no explicit page override exists", () => {

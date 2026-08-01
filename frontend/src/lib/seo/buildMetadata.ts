@@ -31,7 +31,7 @@ export function buildMetadata(resolved: ResolvedSeo): Metadata {
       images,
     },
     icons: resolved.defaultFaviconUrl ? { icon: resolved.defaultFaviconUrl } : undefined,
-    other: resolved.googleVerificationCode ? { "google-site-verification": resolved.googleVerificationCode } : undefined,
+    verification: resolved.googleVerificationCode ? { google: resolved.googleVerificationCode } : undefined,
   };
 }
 
