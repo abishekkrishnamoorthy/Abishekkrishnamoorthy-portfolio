@@ -11,6 +11,8 @@ export function buildWebSiteJsonLd(globalSeo: GlobalSeo) {
     "@type": "WebSite",
     name: globalSeo.siteName,
     url: globalSeo.siteUrl,
+    description: globalSeo.defaultMetaDescription,
+    image: globalSeo.defaultOgImageUrl,
   });
 }
 
@@ -21,6 +23,7 @@ export function buildPersonJsonLd(globalSeo: GlobalSeo, contact?: ContactContent
     "@type": "Person",
     name: globalSeo.defaultAuthor,
     url: globalSeo.siteUrl,
+    image: globalSeo.defaultOgImageUrl,
     email: contact?.contact.email.visible ? contact.contact.email.value : undefined,
     sameAs,
   });

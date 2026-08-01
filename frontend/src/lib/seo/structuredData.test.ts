@@ -8,19 +8,31 @@ const globalSeo: GlobalSeo = {
   siteUrl: "https://example.com",
   defaultMetaTitle: "Portfolio",
   titleTemplate: "%page% | Portfolio",
-  defaultMetaDescription: "Description",
+  defaultMetaDescription: "CMS-managed portfolio description.",
   defaultAuthor: "Abishek",
   defaultRobots: "index,follow",
+  defaultOgImageUrl: "https://res.cloudinary.com/demo/image/upload/v1/portfolio/seo/default.png",
 };
 
 describe("structured data helpers", () => {
-  it("builds website JSON-LD", () => {
-    expect(buildWebSiteJsonLd(globalSeo)).toMatchObject({ "@type": "WebSite", name: "Portfolio", url: "https://example.com" });
+  it("builds Website JSON-LD from Global SEO values", () => {
+    expect(buildWebSiteJsonLd(globalSeo)).toMatchObject({
+      "@type": "WebSite",
+      name: "Portfolio",
+      url: "https://example.com",
+      description: "CMS-managed portfolio description.",
+      image: "https://res.cloudinary.com/demo/image/upload/v1/portfolio/seo/default.png",
+    });
   });
 
-  it("omits empty optional person fields", () => {
+  it("builds Person JSON-LD from Global SEO and omits empty contact fields", () => {
     const person = buildPersonJsonLd(globalSeo);
-    expect(person).toMatchObject({ "@type": "Person", name: "Abishek", url: "https://example.com" });
+    expect(person).toMatchObject({
+      "@type": "Person",
+      name: "Abishek",
+      url: "https://example.com",
+      image: "https://res.cloudinary.com/demo/image/upload/v1/portfolio/seo/default.png",
+    });
     expect(person).not.toHaveProperty("email");
   });
 
@@ -32,5 +44,10 @@ describe("structured data helpers", () => {
       socialLinks: [{ platform: "GitHub", icon: "github", displayOrder: 1, visible: true, profileUrl: "https://github.com/example" }],
     };
     expect(buildPersonJsonLd(globalSeo, contact)).toMatchObject({ email: "hello@example.com", sameAs: ["https://github.com/example"] });
+  });
+
+  it("omits optional image when Global SEO has no image", () => {
+    expect(buildWebSiteJsonLd({ ...globalSeo, defaultOgImageUrl: undefined })).not.toHaveProperty("image");
+    expect(buildPersonJsonLd({ ...globalSeo, defaultOgImageUrl: undefined })).not.toHaveProperty("image");
   });
 });
