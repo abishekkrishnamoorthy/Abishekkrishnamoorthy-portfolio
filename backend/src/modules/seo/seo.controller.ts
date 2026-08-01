@@ -11,6 +11,15 @@ export const seoController = {
   async list(_req: Request, res: Response) {
     return sendSuccess(res, await seoService.list());
   },
+  async getGlobalSeoPublic(_req: Request, res: Response) {
+    return sendSuccess(res, await seoService.getGlobalSeo());
+  },
+  async resolveSeoPublic(req: Request, res: Response) {
+    return sendSuccess(res, await seoService.resolve(String(req.query.path)));
+  },
+  async listSeoPagesPublic(_req: Request, res: Response) {
+    return sendSuccess(res, await seoService.listPages());
+  },
   async create(req: Request, res: Response) {
     return sendCreated(res, await seoService.create(req.body));
   },

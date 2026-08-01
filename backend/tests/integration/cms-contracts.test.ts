@@ -81,7 +81,7 @@ describe("CMS API contracts", () => {
       folder: "portfolio/projects",
     });
 
-    const response = await request(app()).post("/api/cms/projects").set(headers).send(projectPayload()).expect(201);
+    const response = await request(app()).post("/api/cms/projects").set(headers).send(projectPayload("cms-project", "draft")).expect(201);
     expect(response.body.data.slug).toBe("cms-project");
 
     const asset = await MediaAssetModel.findOne({ publicId: "portfolio/projects/cms-project" }).lean();
@@ -126,5 +126,60 @@ describe("CMS API contracts", () => {
     await request(app()).put(`/api/cms/experience/${created.body.data._id}`).set(headers).send({ publishStatus: "published" }).expect(200);
     const list = await request(app()).get("/api/cms/experience").set(headers).expect(200);
     expect(list.body.data[0].publishStatus).toBe("published");
+  });
+
+  it("supports extended CMS SEO override fields and duplicate path validation", async () => {
+    const headers = await authHeader();
+    const payload = {
+      pagePath: "/projects/qconnect",
+      metaTitle: "QConnect",
+      metaDescription: "Queue management project detail page.",
+      canonicalUrl: "https://abishekkrishnamoorthy.online/projects/qconnect",
+      ogImageUrl: "https://res.cloudinary.com/demo/image/upload/v1/portfolio/seo/pages/qconnect.png",
+      ogTitle: "QConnect Social",
+      ogDescription: "Social description",
+      robots: "index,follow",
+    };
+
+    const created = await request(app()).post("/api/cms/seo").set(headers).send(payload).expect(201);
+    expect(created.body.data).toMatchObject(payload);
+
+    await request(app()).post("/api/cms/seo").set(headers).send(payload).expect(409);
+
+    const updated = await request(app()).put(`/api/cms/seo/${created.body.data._id}`).set(headers).send({ robots: "noindex,follow" }).expect(200);
+    expect(updated.body.data.robots).toBe("noindex,follow");
+  });
+
+  it("supports partial Global SEO updates through CMS settings", async () => {
+    const headers = await authHeader();
+    const response = await request(app())
+      .put("/api/cms/settings")
+      .set(headers)
+      .send({
+        seo: {
+          siteName: "Portfolio",
+          siteUrl: "https://abishekkrishnamoorthy.online",
+          defaultMetaTitle: "Default SEO Title",
+          titleTemplate: "%page% | Portfolio",
+          defaultMetaDescription: "Default SEO description for the portfolio.",
+          defaultAuthor: "Abishek Krishnamoorthy",
+          defaultRobots: "index,follow",
+          googleVerificationCode: "google-site-token",
+        },
+      })
+      .expect(200);
+
+    expect(response.body.data.seo).toMatchObject({
+      siteName: "Portfolio",
+      titleTemplate: "%page% | Portfolio",
+      googleVerificationCode: "google-site-token",
+    });
+
+    const partial = await request(app()).put("/api/cms/settings").set(headers).send({ seo: { defaultRobots: "noindex,follow" } }).expect(200);
+    expect(partial.body.data.seo).toMatchObject({
+      siteName: "Portfolio",
+      defaultRobots: "noindex,follow",
+      defaultMetaTitle: "Default SEO Title",
+    });
   });
 });

@@ -27,7 +27,8 @@
 4. Run `npm run seed:admin`.
 5. Run `npm run seed:content`.
 6. Start with `pm2 start ecosystem.config.cjs`.
-7. Verify `/health/ready`, `/api/home`, `/api/projects`, `/api/blogs`, and `/api/contact`.
+7. Verify `/health/ready`, `/api/home`, `/api/projects`, `/api/blogs`, `/api/contact`, `/api/seo/global`, and `/api/seo/resolve?path=/`.
+8. Verify the public frontend serves `/sitemap.xml` and `/robots.txt`.
 
 ## Reverse Proxy
 

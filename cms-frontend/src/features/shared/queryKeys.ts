@@ -13,6 +13,7 @@ export const keys = {
   about: ["about"] as const,
   settings: ["settings"] as const,
   seo: ["seo"] as const,
+  seoGlobal: ["seo", "global"] as const,
   users: ["users"] as const,
   roles: ["roles"] as const,
   auditLogs: ["audit-logs"] as const,

@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import { app } from "../helpers/test-app.js";
 import { ProjectModel } from "@/modules/projects/project.model.js";
 import { BlogArticleModel } from "@/modules/blog/blog.model.js";
+import { SeoOverrideModel } from "@/modules/seo/seo.model.js";
+import { SettingsModel } from "@/modules/settings/settings.model.js";
 
 describe("public API contracts", () => {
   it("returns the home aggregate shape", async () => {
@@ -92,5 +94,67 @@ describe("public API contracts", () => {
     expect(response.body.data.status).toBe("received");
     expect(response.body.data.message).toBe("Message received.");
     expect(response.body.data.content).toBeUndefined();
+  });
+
+  it("returns default global SEO and resolves fallback metadata", async () => {
+    const global = await request(app()).get("/api/seo/global").expect(200);
+    expect(global.body.data).toMatchObject({
+      siteName: "Abishek Krishnamoorthy",
+      siteUrl: "https://abishekkrishnamoorthy.online",
+      defaultRobots: "index,follow",
+    });
+
+    const resolved = await request(app()).get("/api/seo/resolve").query({ path: "/projects/qconnect" }).expect(200);
+    expect(resolved.body.data).toMatchObject({
+      path: "/projects/qconnect",
+      metaTitle: global.body.data.defaultMetaTitle,
+      metaDescription: global.body.data.defaultMetaDescription,
+      canonicalUrl: "https://abishekkrishnamoorthy.online/projects/qconnect",
+      robots: "index,follow",
+      hasPageOverride: false,
+    });
+  });
+
+  it("resolves page SEO overrides and lists page summaries", async () => {
+    await SettingsModel.findByIdAndUpdate(
+      "singleton",
+      {
+        _id: "singleton",
+        seo: {
+          siteName: "Portfolio",
+          siteUrl: "https://example.com",
+          defaultMetaTitle: "Default Title",
+          titleTemplate: "%page% | Portfolio",
+          defaultMetaDescription: "Default description for the portfolio.",
+          defaultAuthor: "Abishek",
+          defaultRobots: "index,follow",
+          defaultOgImageUrl: "https://res.cloudinary.com/demo/image/upload/v1/portfolio/seo/default.png",
+        },
+      },
+      { upsert: true },
+    );
+    await SeoOverrideModel.create({
+      pagePath: "/projects/qconnect",
+      metaTitle: "QConnect",
+      metaDescription: "Queue management project detail page.",
+      ogTitle: "QConnect Social",
+      ogDescription: "Social description",
+      ogImageUrl: "https://res.cloudinary.com/demo/image/upload/v1/portfolio/seo/pages/qconnect.png",
+      robots: "noindex,follow",
+    });
+
+    const resolved = await request(app()).get("/api/seo/resolve").query({ path: "/projects/qconnect" }).expect(200);
+    expect(resolved.body.data).toMatchObject({
+      metaTitle: "QConnect | Portfolio",
+      metaDescription: "Queue management project detail page.",
+      canonicalUrl: "https://example.com/projects/qconnect",
+      robots: "noindex,follow",
+      ogTitle: "QConnect Social",
+      ogDescription: "Social description",
+      hasPageOverride: true,
+    });
+
+    const pages = await request(app()).get("/api/seo/pages").expect(200);
+    expect(pages.body.data).toEqual([expect.objectContaining({ pagePath: "/projects/qconnect", robots: "noindex,follow", updatedAt: expect.any(String) })]);
   });
 });

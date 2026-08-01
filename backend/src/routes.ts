@@ -30,7 +30,7 @@ import { aboutPayloadSchema } from "@/modules/about/about.validation.js";
 import { settingsController } from "@/modules/settings/settings.controller.js";
 import { settingsPayloadSchema } from "@/modules/settings/settings.validation.js";
 import { seoController } from "@/modules/seo/seo.controller.js";
-import { seoPayloadSchema, updateSeoSchema } from "@/modules/seo/seo.validation.js";
+import { resolveSeoQuerySchema, seoPayloadSchema, updateSeoSchema } from "@/modules/seo/seo.validation.js";
 import { auditLogController } from "@/modules/auditLogs/audit-log.controller.js";
 import { writeAuditLog } from "@/modules/auditLogs/audit-log.service.js";
 import { usersService } from "@/modules/users/users.service.js";
@@ -78,6 +78,10 @@ export function registerRoutes(app: Express) {
   publicRouter.get("/contact", publicCache(), asyncHandler(async (_req, res) => sendSuccess(res, await contactService.getInfo())));
   publicRouter.post("/contact/messages", contactRateLimit, validate({ body: contactMessageSchema }), asyncHandler(async (req, res) => sendCreated(res, await contactService.createMessage(req.body, req))));
   publicRouter.post("/contact/meeting-requests", contactRateLimit, validate({ body: meetingRequestSchema }), asyncHandler(async (req, res) => sendCreated(res, await contactService.createMeetingRequest(req.body, req))));
+
+  publicRouter.get("/seo/global", publicCache(300), asyncHandler(seoController.getGlobalSeoPublic));
+  publicRouter.get("/seo/resolve", publicCache(300), validate({ query: resolveSeoQuerySchema }), asyncHandler(seoController.resolveSeoPublic));
+  publicRouter.get("/seo/pages", publicCache(300), asyncHandler(seoController.listSeoPagesPublic));
 
   cmsRouter.use("/auth", authRoutes);
 

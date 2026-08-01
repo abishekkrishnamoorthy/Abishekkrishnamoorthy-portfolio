@@ -57,6 +57,8 @@ export const useUpdateAbout = () => { const c = useQueryClient(); return useMuta
 export const useSettings = () => useQuery({ queryKey: keys.settings, queryFn: settingsService.get });
 export const useUpdateSettings = () => { const c = useQueryClient(); return useMutation({ mutationFn: settingsService.update, ...invalidate(c, keys.settings) }); };
 export const useSeo = () => useQuery({ queryKey: keys.seo, queryFn: seoService.list });
+export const useGlobalSeo = () => useQuery({ queryKey: keys.seoGlobal, queryFn: seoService.getGlobalSeo });
+export const useUpdateGlobalSeo = () => { const c = useQueryClient(); return useMutation({ mutationFn: seoService.updateGlobalSeo, onSuccess: () => { void c.invalidateQueries({ queryKey: keys.seoGlobal }); void c.invalidateQueries({ queryKey: keys.settings }); } }); };
 export const useCreateSeo = () => { const c = useQueryClient(); return useMutation({ mutationFn: seoService.create, ...invalidate(c, keys.seo) }); };
 export const useUpdateSeo = () => { const c = useQueryClient(); return useMutation({ mutationFn: ({ id, body }: any) => seoService.update(id, body), ...invalidate(c, keys.seo) }); };
 export const useDeleteSeo = () => { const c = useQueryClient(); return useMutation({ mutationFn: seoService.delete, ...invalidate(c, keys.seo) }); };

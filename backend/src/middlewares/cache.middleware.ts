@@ -10,7 +10,7 @@ export function publicCache(ttlSeconds = 300) {
     const redis = getRedis();
     if (!redis || req.method !== "GET") return next();
     const key = cacheKey(req);
-    let cached: string | null = null;
+    let cached: string | null;
     try {
       cached = await redis.get(key);
     } catch (error) {

@@ -4,6 +4,15 @@ export const seoRepository = {
   list() {
     return SeoOverrideModel.find().lean();
   },
+  findByIdLean(id: string) {
+    return SeoOverrideModel.findById(id).lean();
+  },
+  findByPagePathLean(pagePath: string) {
+    return SeoOverrideModel.findOne({ pagePath }).lean();
+  },
+  listPublicIndexablePaths() {
+    return SeoOverrideModel.find().select("pagePath robots updatedAt").lean();
+  },
   create(data: unknown) {
     return SeoOverrideModel.create(data as Record<string, unknown>);
   },
