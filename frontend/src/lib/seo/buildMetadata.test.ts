@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildMetadata, fallbackResolvedSeo, withContentFallback } from "@/lib/seo/buildMetadata";
+import { buildMetadata, fallbackResolvedSeo } from "@/lib/seo/buildMetadata";
 import type { ResolvedSeo } from "@/types/seo.types";
 
 const resolved: ResolvedSeo = {
@@ -31,13 +31,6 @@ describe("SEO metadata helpers", () => {
 
   it("omits Google verification metadata when no code exists", () => {
     expect(buildMetadata({ ...resolved, googleVerificationCode: undefined }).verification).toBeUndefined();
-  });
-
-  it("uses content fallback only when no explicit page override exists", () => {
-    const fallback = withContentFallback({ ...resolved, hasPageOverride: false }, { title: "Project Title", description: "Project fallback", imageUrl: "https://example.com/image.png" });
-    expect(fallback.metaTitle).toBe("Project Title");
-    expect(fallback.ogImageUrl).toBe("https://example.com/image.png");
-    expect(withContentFallback(resolved, { title: "Ignored" }).metaTitle).toBe("QConnect | Portfolio");
   });
 
   it("creates non-empty local fallback metadata", () => {

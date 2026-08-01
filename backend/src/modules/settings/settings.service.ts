@@ -10,14 +10,19 @@ type SettingsLike = {
   [key: string]: unknown;
 };
 
-async function invalidateGlobalSeoCache() {
+async function deleteRedisKeysByPattern(pattern: string) {
   const redis = getRedis();
   if (!redis) return;
   try {
-    await redis.del("seo:global");
+    const keys = await redis.keys(pattern);
+    if (keys.length) await redis.del(...keys);
   } catch (error) {
     markRedisUnavailable(error);
   }
+}
+
+async function invalidateGlobalSeoCache() {
+  await Promise.all([deleteRedisKeysByPattern("seo:global"), deleteRedisKeysByPattern("seo:resolve:*")]);
 }
 
 function cleanOptional(value: unknown) {

@@ -35,21 +35,6 @@ export function buildMetadata(resolved: ResolvedSeo): Metadata {
   };
 }
 
-export function withContentFallback(resolved: ResolvedSeo, fallback: { title?: string; description?: string; imageUrl?: string }): ResolvedSeo {
-  if (resolved.hasPageOverride) return resolved;
-  const title = fallback.title?.trim();
-  const description = fallback.description?.trim();
-  const imageUrl = fallback.imageUrl?.trim();
-  return {
-    ...resolved,
-    metaTitle: title || resolved.metaTitle,
-    metaDescription: description || resolved.metaDescription,
-    ogTitle: title || resolved.ogTitle,
-    ogDescription: description || resolved.ogDescription,
-    ...(imageUrl ? { ogImageUrl: imageUrl } : {}),
-  };
-}
-
 export function fallbackResolvedSeo(path: string, fallback: { title?: string; description?: string; imageUrl?: string } = {}): ResolvedSeo {
   const canonicalUrl = `${site.url}${path === "/" ? "" : path}`;
   const title = fallback.title || site.name;
