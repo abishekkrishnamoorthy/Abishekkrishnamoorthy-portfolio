@@ -43,12 +43,62 @@ jobs:
             git branch
 
             echo ""
-            echo "📍 Fetching Latest Changes..."
-            git fetch origin
+            echo "📍 Checking for local changes..."
+            if [ -n "$(git status --porcelain)" ]; then
+              TIMESTAMP=$(date +%Y%m%d%H%M%S)
+              BACKUP_DIR="/tmp/portfolio-deploy-backup-${TIMESTAMP}"
+              mkdir -p "${BACKUP_DIR}" || exit 1
+
+              echo "⚠️ Local changes detected; backing them up to ${BACKUP_DIR}"
+              git diff --binary > "${BACKUP_DIR}/tracked.patch" || exit 1
+              git diff --cached --binary > "${BACKUP_DIR}/staged.patch" || exit 1
+              git ls-files --others --exclude-standard -z > "${BACKUP_DIR}/untracked-files.txt" || exit 1
+
+              if [ -s "${BACKUP_DIR}/untracked-files.txt" ]; then
+                tar --null --files-from="${BACKUP_DIR}/untracked-files.txt" \
+                  --create --gzip --file="${BACKUP_DIR}/untracked-files.tar.gz" \
+                  --ignore-failed-read || exit 1
+              fi
+
+              echo "✅ Local changes backed up; deployment will use origin/main"
+            else
+              echo "✅ Working tree is clean"
+            fi
 
             echo ""
-            echo "📍 Pulling Latest Code..."
-            git pull origin main || exit 1
+            echo "📍 Switching to main branch..."
+            git checkout -f main || exit 1
+
+            echo ""
+            echo "📍 Fetching latest main..."
+            if ! git fetch origin main --prune; then
+              echo "⚠️ Remote-tracking ref is inconsistent; recreating origin/main"
+              git update-ref -d refs/remotes/origin/main || true
+              git fetch origin main --prune || exit 1
+            fi
+
+            echo ""
+            echo "📍 Synchronizing checkout with origin/main..."
+            git reset --hard origin/main || exit 1
+            git clean -fd \
+              -e '.env' \
+              -e '.env.*' \
+              -e 'frontend/.env*' \
+              -e 'backend/.env*' \
+              -e 'cms-frontend/.env*' || exit 1
+
+            CURRENT_BRANCH=$(git branch --show-current)
+            EXPECTED_COMMIT=$(git rev-parse origin/main)
+            ACTUAL_COMMIT=$(git rev-parse HEAD)
+            if [ "${CURRENT_BRANCH}" != "main" ] || [ "${EXPECTED_COMMIT}" != "${ACTUAL_COMMIT}" ]; then
+              echo "❌ Checkout verification failed"
+              echo "Branch: ${CURRENT_BRANCH}"
+              echo "Expected commit: ${EXPECTED_COMMIT}"
+              echo "Actual commit: ${ACTUAL_COMMIT}"
+              exit 1
+            fi
+
+            echo "✅ Checkout synchronized: ${ACTUAL_COMMIT}"
 
             echo ""
             echo "📍 Moving to Frontend Directory..."
