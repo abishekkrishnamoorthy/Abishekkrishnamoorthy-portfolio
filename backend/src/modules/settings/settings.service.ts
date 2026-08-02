@@ -1,7 +1,13 @@
 import { getRedis, markRedisUnavailable } from "@/config/redis.js";
 import { invalidatePublicCache } from "@/jobs/cacheInvalidator.js";
 import { DEFAULT_GLOBAL_SEO, robotsValues, type GlobalSeo, type RobotsValue } from "@/modules/settings/settings.defaults.js";
+import { notifyFrontendSeoRevalidation } from "@/modules/seo/seo-revalidation.service.js";
 import { settingsRepository } from "@/modules/settings/settings.repository.js";
+
+const globalSeoRevalidation = {
+  paths: ["/", "/projects", "/blog", "/contact", "/sitemap.xml", "/robots.txt"],
+  invalidateLayout: true,
+};
 
 type SettingsLike = {
   seo?: (Partial<Omit<GlobalSeo, "defaultRobots">> & { defaultRobots?: string | null }) | null;
@@ -61,7 +67,11 @@ export const settingsService = {
       ...(payload.seo ? { seo: { ...current?.seo, ...payload.seo } } : {}),
     };
     const result = withDefaultSeo((await settingsRepository.update(nextPayload)) as SettingsLike | null);
-    await Promise.all([invalidatePublicCache(), payload.seo ? invalidateGlobalSeoCache() : Promise.resolve()]);
+    await Promise.all([
+      invalidatePublicCache(),
+      payload.seo ? invalidateGlobalSeoCache() : Promise.resolve(),
+      payload.seo ? notifyFrontendSeoRevalidation(globalSeoRevalidation) : Promise.resolve(),
+    ]);
     return result;
   },
   async getGlobalSeoForPublic() {

@@ -2,8 +2,10 @@ import { AppError } from "@/common/AppError.js";
 import { getRedis, markRedisUnavailable } from "@/config/redis.js";
 import { seoRepository } from "@/modules/seo/seo.repository.js";
 import { mediaService } from "@/modules/media/media.service.js";
+import { invalidatePublicCache } from "@/jobs/cacheInvalidator.js";
 import { type GlobalSeo, type RobotsValue } from "@/modules/settings/settings.defaults.js";
 import { settingsService } from "@/modules/settings/settings.service.js";
+import { notifyFrontendSeoRevalidation } from "@/modules/seo/seo-revalidation.service.js";
 
 const seoCacheTtlSeconds = 300;
 
@@ -141,7 +143,12 @@ export const seoService = {
     const existing = await seoRepository.findByPagePathLean(payload.pagePath);
     if (existing) throw new AppError(409, "SEO_PAGE_PATH_CONFLICT", "A page override already exists for this path");
     const result = await seoRepository.create(data);
-    await Promise.all([deleteCached(seoCacheKey(result.pagePath)), mediaService.syncUsageForDocument("seoOverrides", result.id, result.toObject())]);
+    await Promise.all([
+      deleteCached(seoCacheKey(result.pagePath)),
+      invalidatePublicCache("cache:public:/seo/pages:*"),
+      mediaService.syncUsageForDocument("seoOverrides", result.id, result.toObject()),
+      notifyFrontendSeoRevalidation({ paths: [result.pagePath] }),
+    ]);
     return result;
   },
   async update(id: string, data: unknown) {
@@ -153,13 +160,23 @@ export const seoService = {
     }
     const result = await seoRepository.update(id, data);
     const keys = [current?.pagePath, result?.pagePath].filter(Boolean).map((path) => seoCacheKey(path as string));
-    await Promise.all([deleteCached(...keys), mediaService.syncUsageForDocument("seoOverrides", id, result?.toObject() ?? data)]);
+    await Promise.all([
+      deleteCached(...keys),
+      invalidatePublicCache("cache:public:/seo/pages:*"),
+      mediaService.syncUsageForDocument("seoOverrides", id, result?.toObject() ?? data),
+      notifyFrontendSeoRevalidation({ paths: [current?.pagePath, result?.pagePath].filter(Boolean) as string[] }),
+    ]);
     return result;
   },
   async delete(id: string) {
     const current = (await seoRepository.findByIdLean(id)) as SeoOverrideLike | null;
     const result = await seoRepository.delete(id);
-    await Promise.all([current?.pagePath ? deleteCached(seoCacheKey(current.pagePath)) : Promise.resolve(), mediaService.clearUsageForDocument("seoOverrides", id)]);
+    await Promise.all([
+      current?.pagePath ? deleteCached(seoCacheKey(current.pagePath)) : Promise.resolve(),
+      invalidatePublicCache("cache:public:/seo/pages:*"),
+      mediaService.clearUsageForDocument("seoOverrides", id),
+      notifyFrontendSeoRevalidation({ paths: current?.pagePath ? [current.pagePath] : [] }),
+    ]);
     return result;
   },
 };

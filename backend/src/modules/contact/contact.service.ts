@@ -2,6 +2,7 @@ import type { Request } from "express";
 import { invalidatePublicCache } from "@/jobs/cacheInvalidator.js";
 import { contactRepository } from "@/modules/contact/contact.repository.js";
 import { mediaService } from "@/modules/media/media.service.js";
+import { notifyFrontendSeoRevalidation } from "@/modules/seo/seo-revalidation.service.js";
 
 function requestMeta(req: Request) {
   return { ipAddress: req.ip, userAgent: req.header("user-agent") };
@@ -11,7 +12,11 @@ export const contactService = {
   getInfo: contactRepository.getOrSeed,
   async updateInfo(data: unknown) {
     const result = await contactRepository.update(data);
-    await Promise.all([invalidatePublicCache(), mediaService.syncUsageForDocument("contactContent", "singleton", result ?? data)]);
+    await Promise.all([
+      invalidatePublicCache(),
+      mediaService.syncUsageForDocument("contactContent", "singleton", result ?? data),
+      notifyFrontendSeoRevalidation({ invalidateLayout: true }),
+    ]);
     return result;
   },
   async createMessage(data: Record<string, unknown>, req: Request) {

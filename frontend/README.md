@@ -3371,4 +3371,4 @@ Use `GET /api/contact` for visible contact methods and social links, `POST /api/
 
 ## SEO Deployment Note
 
-CMS-managed SEO metadata is embedded during the Next.js production build, so publish a frontend deployment after updating CMS SEO values.
+CMS-managed SEO metadata is refreshed through the protected frontend revalidation endpoint after CMS updates; a frontend deployment is only required when the implementation or deployment configuration changes.

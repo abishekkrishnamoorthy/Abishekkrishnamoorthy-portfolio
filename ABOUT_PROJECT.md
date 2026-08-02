@@ -440,14 +440,15 @@ The public frontend uses Tailwind CSS and global CSS in `src/app/globals.css`. S
 
 ## Environment variables
 
-The frontend reads only `NEXT_PUBLIC_*` variables through `src/lib/env.ts`.
+The public browser-facing frontend configuration reads `NEXT_PUBLIC_*` variables through `src/lib/env.ts`. The server-only SEO revalidation route additionally reads `SEO_REVALIDATION_SECRET` directly from the runtime environment; it is never exposed to client bundles.
 
 ## SEO implementation
 
 - Global metadata is defined in `src/app/layout.tsx`.
 - Page-level metadata exists for home, projects, blog, and contact pages.
 - Dynamic page metadata details for `/projects/[slug]` and `/blog/[slug]`: Unknown from the inspected output.
-- SEO overrides exist in backend/CMS, but public frontend consumption of `/api/cms/seo` or SEO override data was not observed.
+- SEO metadata is resolved through the public `/api/seo/*` endpoints and rendered by the Next.js metadata helpers.
+- CMS SEO, settings, and contact writes notify the protected frontend `/api/revalidate-seo` route so Next.js invalidates affected metadata and JSON-LD without a redeploy.
 
 ## Data fetching
 
@@ -1114,6 +1115,8 @@ Unknown from codebase. No explicit CMS/API subdomain mapping was found.
 | `SUPER_ADMIN_EMAIL` | Seed admin email | `admin@example.com` | `seed:admin` |
 | `SUPER_ADMIN_PASSWORD` | Seed admin password | `change-this-admin-password` | `seed:admin` |
 | `SUPER_ADMIN_NAME` | Seed admin display name | `Portfolio Admin` | `seed:admin` |
+| `FRONTEND_REVALIDATION_URL` | Internal frontend SEO revalidation endpoint | `https://example.com/api/revalidate-seo` | Backend SEO/settings/contact writes |
+| `FRONTEND_REVALIDATION_SECRET` | Shared secret for internal SEO revalidation requests | `server-only secret` | Backend notifier |
 | `PUBLIC_SITE_ORIGIN` | Mentioned in deployment runbook | `https://abishekkrishnamoorthy.online` | Runtime use Unknown |
 | `CMS_ORIGIN` | Mentioned in deployment runbook | Unknown | Runtime use Unknown |
 
@@ -1131,6 +1134,7 @@ Unknown from codebase. No explicit CMS/API subdomain mapping was found.
 | `NEXT_PUBLIC_EMAIL` | Email fallback | `hello@abishekkrishnamoorthy.online` | Frontend env |
 | `NEXT_PUBLIC_SCHEDULE_CALL_URL` | Scheduling link fallback | `https://cal.com/...` | Frontend env |
 | `NEXT_PUBLIC_GA_MEASUREMENT_ID` | Google Analytics measurement ID | `G-XXXXXXXXXX` | Frontend env; implementation use Unknown |
+| `SEO_REVALIDATION_SECRET` | Server-only secret accepted by `/api/revalidate-seo` | `server-only secret` | Next.js server route |
 
 ## CMS
 

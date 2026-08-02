@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   invalidatePublicCache: vi.fn(),
   getOrSeed: vi.fn(),
   update: vi.fn(),
+  notifyFrontendSeoRevalidation: vi.fn(),
 }));
 
 vi.mock("@/config/redis.js", () => ({
@@ -27,6 +28,10 @@ vi.mock("@/modules/settings/settings.repository.js", () => ({
     getOrSeed: mocks.getOrSeed,
     update: mocks.update,
   },
+}));
+
+vi.mock("@/modules/seo/seo-revalidation.service.js", () => ({
+  notifyFrontendSeoRevalidation: mocks.notifyFrontendSeoRevalidation,
 }));
 
 const globalSeo = {
@@ -56,6 +61,7 @@ describe("settingsService", () => {
       forms: {},
       scheduling: {},
     });
+    mocks.notifyFrontendSeoRevalidation.mockResolvedValue(undefined);
   });
 
   it("invalidates global and resolved SEO caches after a Global SEO update", async () => {
@@ -69,5 +75,15 @@ describe("settingsService", () => {
     expect(mocks.redis.keys).toHaveBeenCalledWith("seo:resolve:*");
     expect(mocks.redis.del).toHaveBeenCalledWith("seo:global");
     expect(mocks.redis.del).toHaveBeenCalledWith("seo:resolve:/", "seo:resolve:/contact");
+    expect(mocks.notifyFrontendSeoRevalidation).toHaveBeenCalledWith({
+      paths: ["/", "/projects", "/blog", "/contact", "/sitemap.xml", "/robots.txt"],
+      invalidateLayout: true,
+    });
+  });
+
+  it("does not trigger SEO revalidation for unrelated settings updates", async () => {
+    await settingsService.update({ forms: { recipientEmail: "hello@example.com" } });
+
+    expect(mocks.notifyFrontendSeoRevalidation).not.toHaveBeenCalled();
   });
 });
