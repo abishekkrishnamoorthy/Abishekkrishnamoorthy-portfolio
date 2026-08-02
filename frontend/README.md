@@ -3368,3 +3368,7 @@ These should remain frontend-owned for the current implementation:
 The Contact module should separate CMS-managed display information from visitor-submitted data.
 
 Use `GET /api/contact` for visible contact methods and social links, `POST /api/contact/messages` for the general contact form, and `POST /api/contact/meeting-requests` for scheduling requests.
+
+## SEO Deployment Note
+
+CMS-managed SEO metadata is embedded during the Next.js production build, so publish a frontend deployment after updating CMS SEO values.
