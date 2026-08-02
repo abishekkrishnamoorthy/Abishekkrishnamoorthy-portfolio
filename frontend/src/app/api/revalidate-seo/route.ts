@@ -39,7 +39,7 @@ export async function POST(request: Request) {
 
   const paths = [...new Set((payload.paths as string[] | undefined) ?? [])];
   if (payload.invalidateLayout === true) revalidatePath("/", "layout");
-  paths.forEach((path) => revalidatePath(path));
+  paths.forEach((path) => revalidatePath(path, "page"));
 
   return NextResponse.json({ data: { revalidated: true, paths, invalidateLayout: payload.invalidateLayout === true } });
 }

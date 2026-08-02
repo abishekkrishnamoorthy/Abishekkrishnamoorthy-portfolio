@@ -37,7 +37,7 @@
 
 After a successful CMS SEO, settings, or contact update, the backend sends a signed request to the frontend `/api/revalidate-seo` endpoint. The endpoint invalidates the affected Next.js paths and layout cache so the next request renders fresh CMS metadata without a frontend redeploy.
 
-If the frontend is unavailable, the CMS write remains successful and the backend logs the failed notification. A later deployment or manual cache refresh remains the recovery path.
+The backend logs the target URL and affected paths when notification starts, then logs the HTTP status on success. Missing configuration and failed requests are logged without exposing the shared secret, and the CMS write remains successful. A later deployment or manual cache refresh remains the recovery path.
 
 ## Reverse Proxy
 

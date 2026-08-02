@@ -32,8 +32,8 @@ describe("POST /api/revalidate-seo", () => {
 
     expect(response.status).toBe(200);
     expect(mocks.revalidatePath).toHaveBeenNthCalledWith(1, "/", "layout");
-    expect(mocks.revalidatePath).toHaveBeenNthCalledWith(2, "/");
-    expect(mocks.revalidatePath).toHaveBeenNthCalledWith(3, "/projects");
+    expect(mocks.revalidatePath).toHaveBeenNthCalledWith(2, "/", "page");
+    expect(mocks.revalidatePath).toHaveBeenNthCalledWith(3, "/projects", "page");
   });
 
   it("rejects malformed paths", async () => {
