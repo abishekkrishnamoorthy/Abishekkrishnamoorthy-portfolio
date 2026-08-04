@@ -121,7 +121,6 @@ export default function BlogEditorPage() {
     }
     const previewUrl = URL.createObjectURL(file);
     setCoverDraft({ file, previewUrl });
-    form.setValue("coverImageUrl", previewUrl, { shouldDirty: true, shouldValidate: true });
   }
 
   function handleBlocksChange(blocks: ArticleBlock[]) {

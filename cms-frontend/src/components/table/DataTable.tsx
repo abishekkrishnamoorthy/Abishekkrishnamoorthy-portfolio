@@ -13,11 +13,13 @@ export function DataTable<T extends { id?: string; _id?: string; slug?: string }
   rows,
   columns,
   actions,
+  stickyActions = false,
   emptyTitle = "No records yet",
 }: {
   rows: T[];
   columns: Column<T>[];
   actions?: (row: T) => ReactNode;
+  stickyActions?: boolean;
   emptyTitle?: string;
 }) {
   const tableMode = useMediaQuery("(min-width: 768px)");
@@ -51,8 +53,8 @@ export function DataTable<T extends { id?: string; _id?: string; slug?: string }
   }
 
   return (
-    <div className="overflow-hidden rounded-lg border border-border-subtle bg-surface">
-      <table className="w-full text-left text-sm">
+    <div className={`${stickyActions ? "overflow-x-auto" : "overflow-hidden"} rounded-lg border border-border-subtle bg-surface`}>
+      <table className="min-w-full text-left text-sm">
         <thead className="bg-surface-hover text-xs uppercase text-muted">
           <tr>
             {columns.map((column) => (
@@ -60,20 +62,20 @@ export function DataTable<T extends { id?: string; _id?: string; slug?: string }
                 {column.header}
               </th>
             ))}
-            {actions ? <th className="px-4 py-3 text-right font-medium">Actions</th> : null}
+            {actions ? <th className={`${stickyActions ? "sticky right-0 z-20 w-[360px] min-w-[360px] bg-surface-hover" : ""} whitespace-nowrap px-4 py-3 text-right font-medium`}>Actions</th> : null}
           </tr>
         </thead>
         <tbody className="divide-y divide-border-subtle">
           {rows.map((row) => {
             const key = row.id ?? row._id ?? row.slug ?? JSON.stringify(row);
             return (
-              <tr key={key} className="hover:bg-surface-hover">
+              <tr key={key} className="group hover:bg-surface-hover">
                 {columns.map((column) => (
                   <td key={column.key} className="px-4 py-3 align-middle">
                     {column.render(row)}
                   </td>
                 ))}
-                {actions ? <td className="px-4 py-3 text-right">{actions(row)}</td> : null}
+                {actions ? <td className={`${stickyActions ? "sticky right-0 z-10 bg-surface group-hover:bg-surface-hover" : ""} whitespace-nowrap px-4 py-3 text-right align-middle`}>{actions(row)}</td> : null}
               </tr>
             );
           })}

@@ -1,18 +1,23 @@
 import { Link, Outlet } from "react-router-dom";
-import { Edit, Plus, Search, Trash2 } from "lucide-react";
+import { Edit, ExternalLink, Plus, Search, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
+import { useAuth } from "@/app/providers/AuthProvider";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { DataTable } from "@/components/table/DataTable";
 import { useConfirm } from "@/hooks/useConfirm";
-import { useBlogs, useDeleteBlog, usePublishBlog } from "@/features/shared/hooks";
+import { useBlogs, useDeleteBlog, useGlobalSeo, usePublishBlog } from "@/features/shared/hooks";
 import type { BlogArticle } from "@/types/blog.types";
 import { useSaveWorkflow } from "@/hooks/useSaveWorkflow";
+import { can } from "@/lib/auth/permissions";
+import { formatDate } from "@/lib/utils/formatDate";
 
 export default function BlogsListPage() {
+  const { user } = useAuth();
   const query = useBlogs();
+  const globalSeo = useGlobalSeo();
   const publish = usePublishBlog();
   const remove = useDeleteBlog();
   const confirm = useConfirm();
@@ -40,7 +45,7 @@ export default function BlogsListPage() {
       <div className="grid gap-4">
         <div className="grid gap-3 sm:flex sm:items-center sm:justify-between">
           <div><h1 className="text-2xl font-semibold">Blogs</h1><p className="text-sm text-secondary">Author, review, and publish articles.</p></div>
-          <Link to="/blogs/new" className="sm:w-auto"><Button className="w-full sm:w-auto"><Plus size={18} /> New Article</Button></Link>
+          {can(user, "blogs", "create") ? <Link to="/blogs/new" className="sm:w-auto"><Button className="w-full sm:w-auto"><Plus size={18} /> New Article</Button></Link> : null}
         </div>
         <div className="grid gap-3 rounded-xl border border-border-subtle bg-surface p-3 shadow-elevation-1 sm:p-4 lg:grid-cols-[minmax(0,1fr)_160px_180px_160px]">
           <div className="relative block">
@@ -86,11 +91,13 @@ export default function BlogsListPage() {
             },
             { key: "category", header: "Category", render: (row) => <span className="text-sm">{row.category}</span> },
             { key: "status", header: "Status", render: (row) => <div className="flex flex-wrap gap-1"><Badge tone={row.publishStatus === "published" ? "success" : "warning"}>{row.publishStatus}</Badge>{row.featured ? <Badge tone="info">Featured</Badge> : null}</div> },
-            { key: "updated", header: "Updated", render: (row) => row.updatedAt },
-            { key: "read", header: "Read", render: (row) => `${row.readTimeMinutes ?? 1} min` },
+            { key: "updated", header: "Updated", render: (row) => <span className="whitespace-nowrap">{formatDate(row.updatedAt)}</span> },
+            { key: "read", header: "Read", render: (row) => <span className="whitespace-nowrap">{row.readTimeMinutes ?? 1} min</span> },
           ]}
+          stickyActions
           actions={(row) => {
             const isPublished = row.publishStatus === "published";
+            const publicUrl = globalSeo.data?.siteUrl ? `${globalSeo.data.siteUrl.replace(/\/$/, "")}/blog/${encodeURIComponent(row.slug)}` : undefined;
             const statusAction = (
               <Button
                 className="w-full"
@@ -114,9 +121,10 @@ export default function BlogsListPage() {
             );
             return (
               <div className="grid w-full grid-cols-2 gap-2 sm:inline-flex sm:w-auto sm:flex-wrap sm:justify-end">
-                <Link to={`/blogs/${row.slug}`}><Button className="w-full" size="sm" variant="secondary"><Edit size={14} /> Edit</Button></Link>
-                {isPublished ? statusAction : deleteAction}
-                <div className="col-span-2 sm:col-span-1">{isPublished ? deleteAction : statusAction}</div>
+                {can(user, "blogs", "update") ? <Link to={`/blogs/${row.slug}`}><Button className="w-full" size="sm" variant="secondary"><Edit size={14} /> Edit</Button></Link> : null}
+                {can(user, "blogs", "publish") ? statusAction : null}
+                {isPublished && publicUrl ? <a href={publicUrl} target="_blank" rel="noreferrer"><Button className="w-full" size="sm" variant="secondary"><ExternalLink size={14} /> Public</Button></a> : null}
+                {can(user, "blogs", "delete") ? deleteAction : null}
               </div>
             );
           }}

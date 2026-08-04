@@ -4,8 +4,9 @@ import { dateStringSchema, httpsUrlSchema, slugSchema, urlSchema } from "@/lib/v
 export const projectCategories = ["Full Stack", "Frontend", "Backend", "AI", "Cloud", "Learning"] as const;
 export const projectStatuses = ["completed", "in-progress", "production"] as const;
 const row = z.object({ category: z.string().trim().min(2).max(24), technologies: z.string().trim().min(2).max(120) });
+const localPreviewUrlSchema = z.union([urlSchema, z.string().max(300).startsWith("blob:")]);
 const gallery = z.object({
-  url: urlSchema,
+  url: localPreviewUrlSchema,
   caption: z.string().trim().max(80).optional(),
   alt: z.string().trim().max(140).optional(),
   title: z.string().trim().max(80).optional(),
@@ -21,7 +22,7 @@ const projectSchemaBase = z.object({
   description: z.string().trim().min(40).max(220),
   status: z.enum(projectStatuses),
   category: z.enum(projectCategories),
-  thumbnailUrl: urlSchema,
+  thumbnailUrl: localPreviewUrlSchema,
   techTags: z.array(z.string().trim().min(1).max(20)).min(1).max(8),
   highlights: z.array(z.string().trim().min(1).max(70)).min(1).max(4),
   liveDemoUrl: httpsUrlSchema,
