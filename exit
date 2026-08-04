@@ -1,0 +1,30 @@
+[33m71a9ffbe[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m editorbug fix
+[33m55c7940a[m cms bug fix 2
+[33me31e39e3[m cms bug fix 2
+[33mc6f396c9[m cms bug fix
+[33m7d1e4aaa[m fix: make SEO revalidation observable
+[33m02f0fb03[m ci: trigger frontend deploy workflow changes
+[33mecba0f79[m ci: recover frontend deploy checkout drift
+[33ma28412cc[m seo fixing3
+[33mb81c94a7[m chore(frontend): trigger SEO metadata redeploy
+[33m2b379720[m seo fixing2
+[33m58379a8b[m seo fixing
+[33m9bf88a53[m seo implemetntation
+[33mdfb0a632[m seo implemetntation
+[33m40992474[m trigger
+[33meb4eb78d[m .. workflow
+[33m4cce24a0[m cms workflow edited
+[33m0e89d1a2[m reload bug fixing
+[33mc5d8558c[m frontend gapfixed
+[33m8452eca8[m fix origin allow in backend and frontend ui bug
+[33m4862fd37[m frontend workflow was added
+[33m73bd4682[m frontend work
+[33m73e69ca6[m frontend work
+[33ma905cfb4[m Update PM2 process name in deploy workflow
+[33m7674337d[m home edited
+[33m512792bf[m workflow edited
+[33mfd76acae[m workflow edited
+[33m0e97eb06[m workflow edited
+[33m464b1d75[m workflow for backend compeleted
+[33m0e7ac75b[m first commit
+[33m4362b83e[m Initial commit from Create Next App
