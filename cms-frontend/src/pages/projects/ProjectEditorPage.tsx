@@ -59,6 +59,7 @@ import { Textarea } from "@/components/ui/Textarea";
 import { projectCategories, projectSchema, projectStatuses, type ProjectFormValues } from "@/features/projects/projects.schema";
 import { useCreateProject, useProjects, useUpdateProject, useUploadMedia } from "@/features/shared/hooks";
 import { useSaveWorkflow } from "@/hooks/useSaveWorkflow";
+import { toDateInputValue } from "@/lib/utils/formatDate";
 
 type ProjectTab = "details" | "readme" | "screenshots" | "case-study";
 type GalleryItem = NonNullable<ProjectFormValues["gallery"]>[number];
@@ -395,7 +396,7 @@ export default function ProjectEditorPage() {
       return;
     }
     if (current) {
-      const nextValues = { ...defaults, ...current };
+      const nextValues = { ...defaults, ...current, lastUpdatedAt: toDateInputValue(current.lastUpdatedAt) || defaults.lastUpdatedAt };
       form.reset(nextValues);
       setThumbnailDraft({ previewUrl: current.thumbnailUrl });
       setGalleryDrafts((current.gallery ?? []).map(galleryDraftFromItem));

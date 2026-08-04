@@ -1,18 +1,22 @@
 import { Link, Outlet } from "react-router-dom";
-import { Edit, ExternalLink, Plus, Search, Trash2 } from "lucide-react";
+import { CalendarDays, Clock3, Edit, ExternalLink, Plus, Search, Trash2, UserRound } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useAuth } from "@/app/providers/AuthProvider";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
-import { DataTable } from "@/components/table/DataTable";
+import { EmptyState } from "@/components/feedback/EmptyState";
 import { useConfirm } from "@/hooks/useConfirm";
 import { useBlogs, useDeleteBlog, useGlobalSeo, usePublishBlog } from "@/features/shared/hooks";
-import type { BlogArticle } from "@/types/blog.types";
 import { useSaveWorkflow } from "@/hooks/useSaveWorkflow";
 import { can } from "@/lib/auth/permissions";
 import { formatDate } from "@/lib/utils/formatDate";
+
+export function blogPublicUrl(siteUrl: string | undefined, slug: string) {
+  if (!siteUrl) return undefined;
+  return `${siteUrl.replace(/\/$/, "")}/blog/${encodeURIComponent(slug)}`;
+}
 
 export default function BlogsListPage() {
   const { user } = useAuth();
@@ -52,83 +56,139 @@ export default function BlogsListPage() {
             <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted" size={16} />
             <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search articles..." className="pl-9" aria-label="Search articles" />
           </div>
-          <div className="-mx-1 flex snap-x gap-2 overflow-x-auto px-1 lg:contents">
-            <Select className="min-w-[150px] snap-start" value={status} onChange={(event) => setStatus(event.target.value)}>
+          <div className="grid min-w-0 gap-2 sm:grid-cols-3 lg:contents">
+            <Select value={status} onChange={(event) => setStatus(event.target.value)}>
               <option value="all">All statuses</option>
               <option value="draft">Draft</option>
               <option value="published">Published</option>
             </Select>
-            <Select className="min-w-[170px] snap-start" value={category} onChange={(event) => setCategory(event.target.value)}>
+            <Select value={category} onChange={(event) => setCategory(event.target.value)}>
               <option value="all">All categories</option>
               {categories.map((item) => <option key={item} value={item}>{item}</option>)}
             </Select>
-            <Select className="min-w-[150px] snap-start" value={sort} onChange={(event) => setSort(event.target.value)}>
+            <Select value={sort} onChange={(event) => setSort(event.target.value)}>
               <option value="updated">Updated</option>
               <option value="published">Published</option>
               <option value="title">Title</option>
             </Select>
           </div>
         </div>
-        <DataTable<BlogArticle>
-          rows={rows}
-          emptyTitle={query.isLoading ? "Loading articles..." : "No articles yet"}
-          columns={[
-            {
-              key: "title",
-              header: "Title",
-              primary: true,
-              render: (row) => (
-                <div className="flex min-w-0 items-center gap-3">
-                  <div className="h-12 w-16 shrink-0 overflow-hidden rounded-md border border-border-subtle bg-surface-hover">
-                    {row.coverImageUrl ? <img src={row.coverImageUrl} alt={`${row.title} cover`} className="h-full w-full object-cover" /> : null}
+        {!rows.length ? (
+          <EmptyState title={query.isLoading ? "Loading articles..." : "No articles yet"} />
+        ) : (
+          <div className="grid min-w-0 gap-4 xl:grid-cols-2 2xl:grid-cols-3">
+            {rows.map((row) => {
+              const isPublished = row.publishStatus === "published";
+              const publicUrl = blogPublicUrl(globalSeo.data?.siteUrl, row.slug);
+              const nextStatus = isPublished ? "draft" : "published";
+              const canUpdate = can(user, "blogs", "update");
+              const canPublish = can(user, "blogs", "publish");
+              const canDelete = can(user, "blogs", "delete");
+              return (
+                <article
+                  key={row._id ?? row.slug}
+                  className="group grid min-w-0 overflow-hidden rounded-lg border border-border-subtle bg-surface shadow-elevation-1 transition duration-200 hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-elevation-2"
+                >
+                  <div className="grid min-w-0 gap-0 md:grid-cols-[220px_minmax(0,1fr)] xl:grid-cols-1 2xl:grid-cols-[200px_minmax(0,1fr)]">
+                    <div className="relative min-w-0 overflow-hidden bg-surface-hover">
+                      <div className="aspect-[16/9] w-full">
+                        {row.coverImageUrl ? (
+                          <img
+                            src={row.coverImageUrl}
+                            alt={`${row.title} cover`}
+                            className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
+                            loading="lazy"
+                            sizes="(min-width: 1536px) 200px, (min-width: 1280px) 50vw, (min-width: 768px) 220px, 100vw"
+                          />
+                        ) : (
+                          <div className="grid h-full place-items-center border-b border-border-subtle text-center md:border-b-0 md:border-r xl:border-b xl:border-r-0 2xl:border-b-0 2xl:border-r">
+                            <div>
+                              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">No cover</p>
+                              <p className="mt-1 text-xs text-secondary">16:9 preview</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="grid min-w-0 content-between gap-5 p-4 sm:p-5">
+                      <div className="min-w-0 space-y-3">
+                        <div className="flex min-w-0 flex-wrap items-center gap-2">
+                          <Badge tone="neutral">{row.category}</Badge>
+                          <Badge tone={isPublished ? "success" : "warning"}>{row.publishStatus}</Badge>
+                          {row.featured ? <Badge tone="info">Featured</Badge> : null}
+                        </div>
+                        <div className="min-w-0">
+                          <h2 className="cms-line-clamp-2 text-base font-semibold leading-6 text-primary sm:text-lg">{row.title}</h2>
+                          <p className="cms-line-clamp-2 mt-2 text-sm leading-6 text-secondary">{row.excerpt}</p>
+                        </div>
+                        <div className="grid min-w-0 gap-2 text-xs text-muted sm:grid-cols-2">
+                          <span className="inline-flex min-w-0 items-center gap-1.5">
+                            <UserRound size={14} className="shrink-0" />
+                            <span className="truncate">{row.author}</span>
+                          </span>
+                          <span className="inline-flex min-w-0 items-center gap-1.5">
+                            <CalendarDays size={14} className="shrink-0" />
+                            <span className="truncate">{formatDate(row.updatedAt)}</span>
+                          </span>
+                          <span className="inline-flex min-w-0 items-center gap-1.5">
+                            <Clock3 size={14} className="shrink-0" />
+                            <span className="truncate">{row.readTimeMinutes ?? 1} min read</span>
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex min-w-0 flex-wrap gap-2 border-t border-border-subtle pt-4">
+                        {canUpdate ? (
+                          <Link to={`/blogs/${row.slug}`} className="min-w-0 flex-1 sm:flex-none">
+                            <Button className="w-full px-3" size="sm" variant="secondary"><Edit size={14} /> Edit</Button>
+                          </Link>
+                        ) : null}
+                        {canPublish ? (
+                          <Button
+                            className="min-w-0 flex-1 px-3 sm:flex-none"
+                            disabled={saveWorkflow.isSaving}
+                            size="sm"
+                            variant="secondary"
+                            onClick={async () => {
+                              const ok = await confirm({
+                                title: `${nextStatus === "published" ? "Publish" : "Unpublish"} ${row.title}?`,
+                                description: nextStatus === "published" ? "This article will become visible on the public frontend." : "This article will be removed from the public frontend.",
+                              });
+                              if (ok) void saveWorkflow.save(() => publish.mutateAsync({ slug: row.slug, publishStatus: nextStatus }));
+                            }}
+                          >
+                            {isPublished ? "Unpublish" : "Publish"}
+                          </Button>
+                        ) : null}
+                        {isPublished && publicUrl ? (
+                          <a
+                            href={publicUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex min-h-9 min-w-0 flex-1 items-center justify-center gap-2 rounded-md border border-border-subtle bg-surface px-3 text-sm font-medium text-primary transition hover:bg-surface-hover sm:flex-none"
+                          >
+                            <ExternalLink size={14} /> Public
+                          </a>
+                        ) : null}
+                        {canDelete ? (
+                          <Button
+                            className="min-w-0 flex-1 px-3 sm:flex-none"
+                            size="sm"
+                            variant="danger"
+                            onClick={async () => (await confirm({ title: `Delete ${row.title}?`, description: "This cannot be undone." })) && remove.mutate(row.slug)}
+                          >
+                            <Trash2 size={14} /> Delete
+                          </Button>
+                        ) : null}
+                      </div>
+                    </div>
                   </div>
-                  <div className="min-w-0">
-                    <p className="truncate font-medium text-primary">{row.title}</p>
-                    <p className="truncate text-xs text-secondary">{row.excerpt}</p>
-                  </div>
-                </div>
-              ),
-            },
-            { key: "category", header: "Category", render: (row) => <span className="text-sm">{row.category}</span> },
-            { key: "status", header: "Status", render: (row) => <div className="flex flex-wrap gap-1"><Badge tone={row.publishStatus === "published" ? "success" : "warning"}>{row.publishStatus}</Badge>{row.featured ? <Badge tone="info">Featured</Badge> : null}</div> },
-            { key: "updated", header: "Updated", render: (row) => <span className="whitespace-nowrap">{formatDate(row.updatedAt)}</span> },
-            { key: "read", header: "Read", render: (row) => <span className="whitespace-nowrap">{row.readTimeMinutes ?? 1} min</span> },
-          ]}
-          stickyActions
-          actions={(row) => {
-            const isPublished = row.publishStatus === "published";
-            const publicUrl = globalSeo.data?.siteUrl ? `${globalSeo.data.siteUrl.replace(/\/$/, "")}/blog/${encodeURIComponent(row.slug)}` : undefined;
-            const statusAction = (
-              <Button
-                className="w-full"
-                disabled={saveWorkflow.isSaving}
-                size="sm"
-                variant="secondary"
-                onClick={async () => {
-                  const nextStatus = isPublished ? "draft" : "published";
-                  const ok = await confirm({
-                    title: `${nextStatus === "published" ? "Publish" : "Unpublish"} ${row.title}?`,
-                    description: nextStatus === "published" ? "This article will become visible on the public frontend." : "This article will be removed from the public frontend.",
-                  });
-                  if (ok) void saveWorkflow.save(() => publish.mutateAsync({ slug: row.slug, publishStatus: nextStatus }));
-                }}
-              >
-                {isPublished ? "Unpublish" : "Publish"}
-              </Button>
-            );
-            const deleteAction = (
-              <Button className="w-full sm:w-auto" size="sm" variant="danger" onClick={async () => (await confirm({ title: `Delete ${row.title}?`, description: "This cannot be undone." })) && remove.mutate(row.slug)}><Trash2 size={14} /> Delete</Button>
-            );
-            return (
-              <div className="grid w-full grid-cols-2 gap-2 sm:inline-flex sm:w-auto sm:flex-wrap sm:justify-end">
-                {can(user, "blogs", "update") ? <Link to={`/blogs/${row.slug}`}><Button className="w-full" size="sm" variant="secondary"><Edit size={14} /> Edit</Button></Link> : null}
-                {can(user, "blogs", "publish") ? statusAction : null}
-                {isPublished && publicUrl ? <a href={publicUrl} target="_blank" rel="noreferrer"><Button className="w-full" size="sm" variant="secondary"><ExternalLink size={14} /> Public</Button></a> : null}
-                {can(user, "blogs", "delete") ? deleteAction : null}
-              </div>
-            );
-          }}
-        />
+                </article>
+              );
+            })}
+          </div>
+        )}
       </div>
       <Outlet />
     </>

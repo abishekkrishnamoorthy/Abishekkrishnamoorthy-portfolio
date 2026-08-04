@@ -362,10 +362,10 @@ function BlockShell({ block, index, total, uploading, children, sectionRef, onRe
   onMove: (direction: -1 | 1) => void;
 }) {
   return (
-    <section ref={sectionRef} className="rounded-xl border border-border-subtle bg-surface-hover/60 p-3 sm:p-4">
+    <section ref={sectionRef} className="min-w-0 overflow-hidden rounded-xl border border-border-subtle bg-surface-hover/60 p-3 sm:p-4">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">{block.type}</p>
-        <div className="flex items-center gap-1">
+        <div className="flex shrink-0 items-center gap-1">
           {uploading ? <span className="mr-2 text-xs font-medium text-accent">Uploading...</span> : null}
           <IconButton label="Move up" disabled={index === 0} onClick={() => onMove(-1)}><ArrowUp size={14} /></IconButton>
           <IconButton label="Move down" disabled={index === total - 1} onClick={() => onMove(1)}><ArrowDown size={14} /></IconButton>
@@ -444,17 +444,17 @@ function EditableBlock(props: {
       ) : block.type === "table" ? (
         <TableEditor block={block} onUpdate={onUpdate} />
       ) : block.type === "image" ? (
-        <MediaEditor preview={<img src={block.src} alt={block.alt} className="aspect-video w-full rounded-md border border-border-subtle object-cover" />} onReplace={() => onReplace("image")}>
+        <MediaEditor preview={<ImageMediaPreview src={block.src} alt={block.alt} />} onReplace={() => onReplace("image")}>
           <Input ref={setInputRef} value={block.alt} placeholder="Alt text" onChange={(event) => onUpdate({ ...block, alt: event.target.value })} />
           <Input value={block.caption ?? ""} placeholder="Caption" onChange={(event) => onUpdate({ ...block, caption: event.target.value })} />
         </MediaEditor>
       ) : block.type === "video" ? (
-        <MediaEditor preview={<video src={block.src} controls className="aspect-video w-full rounded-md border border-border-subtle bg-black" poster={block.thumbnailUrl}><track kind="captions" /></video>} onReplace={() => onReplace("video")}>
+        <MediaEditor preview={<VideoMediaPreview src={block.src} title={block.title} thumbnailUrl={block.thumbnailUrl} />} onReplace={() => onReplace("video")}>
           <Input ref={setInputRef} value={block.title} placeholder="Video title" onChange={(event) => onUpdate({ ...block, title: event.target.value })} />
           <Input value={block.caption ?? ""} placeholder="Caption" onChange={(event) => onUpdate({ ...block, caption: event.target.value })} />
         </MediaEditor>
       ) : block.type === "audio" ? (
-        <MediaEditor preview={<audio src={block.src} controls className="w-full"><track kind="captions" /></audio>} onReplace={() => onReplace("audio")}>
+        <MediaEditor preview={<div className="min-w-0 rounded-md border border-border-subtle bg-surface p-3"><audio src={block.src} controls className="w-full"><track kind="captions" /></audio></div>} onReplace={() => onReplace("audio")}>
           <Input ref={setInputRef} value={block.title} placeholder="Audio title" onChange={(event) => onUpdate({ ...block, title: event.target.value })} />
           <Input value={block.caption ?? ""} placeholder="Caption" onChange={(event) => onUpdate({ ...block, caption: event.target.value })} />
         </MediaEditor>
@@ -469,8 +469,26 @@ function EditableBlock(props: {
   );
 }
 
+function ImageMediaPreview({ src, alt }: { src: string; alt: string }) {
+  return (
+    <div className="mx-auto w-full max-w-[760px] overflow-hidden rounded-lg border border-border-subtle bg-surface">
+      <img src={src} alt={alt} className="aspect-[16/9] h-full w-full object-contain" loading="lazy" />
+    </div>
+  );
+}
+
+function VideoMediaPreview({ src, title, thumbnailUrl }: { src: string; title: string; thumbnailUrl?: string }) {
+  return (
+    <div className="mx-auto w-full max-w-[760px] overflow-hidden rounded-lg border border-border-subtle bg-black">
+      <video src={src} title={title} controls className="aspect-[16/9] w-full" poster={thumbnailUrl}>
+        <track kind="captions" />
+      </video>
+    </div>
+  );
+}
+
 function MediaEditor({ preview, children, onReplace }: { preview: React.ReactNode; children: React.ReactNode; onReplace: () => void }) {
-  return <div className="grid gap-4">{preview}<div className="grid gap-3 md:grid-cols-2">{children}</div><div><Button type="button" size="sm" variant="secondary" onClick={onReplace}>Replace media</Button></div></div>;
+  return <div className="grid min-w-0 gap-4">{preview}<div className="grid min-w-0 gap-3 md:grid-cols-2">{children}</div><div><Button type="button" size="sm" variant="secondary" onClick={onReplace}>Replace media</Button></div></div>;
 }
 
 function FileEditor({
@@ -485,7 +503,7 @@ function FileEditor({
   onReplace: () => void;
 }) {
   return (
-    <div className="grid gap-3">
+    <div className="grid min-w-0 gap-3">
       <Input ref={fieldRef} value={block.title} placeholder="Document title" onChange={(event) => onUpdate({ ...block, title: event.target.value })} />
       <Input value={block.description ?? ""} placeholder="Description" onChange={(event) => onUpdate({ ...block, description: event.target.value })} />
       <Input value={block.href} placeholder="Document URL" onChange={(event) => onUpdate({ ...block, href: event.target.value })} />
@@ -506,7 +524,7 @@ function LinkEditor({
   onReplace: () => void;
 }) {
   return (
-    <div className="grid gap-3">
+    <div className="grid min-w-0 gap-3">
       <Input ref={fieldRef} value={block.title} placeholder="Link title" onChange={(event) => onUpdate({ ...block, title: event.target.value } as ArticleBlock)} />
       <Input value={block.description ?? ""} placeholder="Description" onChange={(event) => onUpdate({ ...block, description: event.target.value } as ArticleBlock)} />
       <Input value={block.href} placeholder="https://..." onChange={(event) => onUpdate({ ...block, href: event.target.value } as ArticleBlock)} />

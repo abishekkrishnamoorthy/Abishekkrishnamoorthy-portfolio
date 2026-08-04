@@ -20,6 +20,7 @@ import { BlogArticleBuilder } from "@/features/blog-article-builder/BlogArticleB
 import { blogSchema, type BlogFormValues } from "@/features/blogs/blogs.schema";
 import { useBlogs, useCreateBlog, useUpdateBlog, useUploadMedia } from "@/features/shared/hooks";
 import { useSaveWorkflow } from "@/hooks/useSaveWorkflow";
+import { toDateInputValue } from "@/lib/utils/formatDate";
 import type { ArticleBlock } from "@/types/blog.types";
 
 type BlogTab = "details" | "editor" | "preview";
@@ -66,7 +67,11 @@ function ArticlePreview({ article }: { article: BlogFormValues }) {
           <span className="inline-flex items-center gap-1.5"><CalendarDays size={15} /> {article.publishedAt}</span>
           <span className="inline-flex items-center gap-1.5"><Clock3 size={15} /> Auto read time</span>
         </div>
-        {article.coverImageUrl ? <img src={article.coverImageUrl} alt={`${article.title} cover preview`} className="mt-5 aspect-[16/9] w-full rounded-lg border border-border-subtle object-cover" /> : null}
+        {article.coverImageUrl ? (
+          <div className="mt-5 overflow-hidden rounded-lg border border-border-subtle bg-surface-hover">
+            <img src={article.coverImageUrl} alt={`${article.title} cover preview`} className="aspect-[16/9] w-full object-cover" loading="lazy" />
+          </div>
+        ) : null}
         <div className="mt-7 rounded-lg border border-border-subtle bg-surface p-5"><ArticleRenderer blocks={article.blocks} /></div>
       </div>
     </div>
@@ -96,7 +101,12 @@ export default function BlogEditorPage() {
       return;
     }
     if (current) {
-      const values = { ...defaults, ...current };
+      const values = {
+        ...defaults,
+        ...current,
+        publishedAt: toDateInputValue(current.publishedAt) || today,
+        updatedAt: toDateInputValue(current.updatedAt) || today,
+      };
       form.reset(values);
       setCoverDraft({ previewUrl: current.coverImageUrl });
     }
@@ -222,9 +232,19 @@ export default function BlogEditorPage() {
                     <div className="md:col-span-2"><FormField label="SEO Description" error={form.formState.errors.seoDescription?.message}><Textarea {...form.register("seoDescription")} className="min-h-24" /></FormField></div>
                   </CardContent></Card>
                 </div>
-                <Card><CardContent className="grid gap-4">
-                  <div className="overflow-hidden rounded-md border border-border-subtle bg-surface-hover">
-                    {coverDraft.previewUrl ? <img src={coverDraft.previewUrl} alt="Cover preview" className="aspect-[16/10] w-full object-cover" /> : <div className="grid aspect-[16/10] place-items-center text-center"><div><ImageIcon className="mx-auto mb-2 text-muted" size={22} /><p className="text-xs font-semibold text-primary">Cover Image</p><p className="mt-1 text-xs text-muted">No image selected</p></div></div>}
+                <Card><CardContent className="grid min-w-0 gap-4">
+                  <div className="overflow-hidden rounded-lg border border-border-subtle bg-surface-hover">
+                    {coverDraft.previewUrl ? (
+                      <img src={coverDraft.previewUrl} alt="Cover preview" className="aspect-[16/9] w-full object-cover" loading="lazy" />
+                    ) : (
+                      <div className="grid aspect-[16/9] place-items-center px-4 text-center">
+                        <div>
+                          <ImageIcon className="mx-auto mb-2 text-muted" size={22} />
+                          <p className="text-xs font-semibold text-primary">Cover Image</p>
+                          <p className="mt-1 text-xs text-muted">No image selected</p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                   <input ref={coverInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={(event) => { handleCoverSelection(event.target.files?.[0]); event.currentTarget.value = ""; }} />
                   <div className="flex flex-wrap gap-2">

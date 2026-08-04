@@ -32,6 +32,13 @@ select {
   padding-bottom: env(safe-area-inset-bottom);
 }
 
+.cms-line-clamp-2 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
 @keyframes cms-sheet-up {
   from {
     transform: translateY(100%);
