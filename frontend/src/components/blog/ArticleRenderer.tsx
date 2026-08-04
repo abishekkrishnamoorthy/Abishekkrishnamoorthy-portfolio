@@ -173,7 +173,8 @@ function CodeBlock({ block }: { block: Extract<ArticleBlock, { type: "code" }> }
 
 function QuoteBlock({ block }: { block: Extract<ArticleBlock, { type: "quote" }> }) {
   return (
-    <blockquote className="relative rounded-2xl border border-[rgba(212,175,55,0.18)] bg-[rgba(212,175,55,0.06)] p-6">
+    <blockquote className="relative overflow-hidden rounded-2xl border border-[rgba(212,175,55,0.24)] bg-[linear-gradient(135deg,rgba(212,175,55,0.08),rgba(18,19,24,0.96))] p-6 shadow-[0_24px_70px_rgba(0,0,0,0.22)]">
+      <span className="absolute inset-y-5 left-0 w-1 rounded-r-full bg-[var(--accent-gold)]" aria-hidden="true" />
       <Quote className="mb-4 h-8 w-8 text-[var(--accent-gold)]" />
       <p className="text-xl italic leading-9 text-white/90">{block.text}</p>
       {block.author ? <footer className="mt-4 text-sm text-[var(--text-muted)]">— {block.author}</footer> : null}
@@ -202,17 +203,17 @@ function CalloutBlock({ block }: { block: Extract<ArticleBlock, { type: "callout
 
 function TableBlock({ block }: { block: Extract<ArticleBlock, { type: "table" }> }) {
   return (
-    <div className="custom-scrollbar overflow-x-auto rounded-2xl border border-[var(--border-subtle)]">
+    <div className="custom-scrollbar overflow-x-auto rounded-2xl border border-[rgba(212,175,55,0.2)] shadow-[0_20px_60px_rgba(0,0,0,0.18)]">
       <table className="w-full min-w-[620px] border-collapse bg-[var(--bg-surface)] text-sm">
-        <thead>
+        <thead className="bg-[rgba(212,175,55,0.1)]">
           <tr>
-            {block.columns.map((column) => <th key={column} className="border-b border-[var(--border-subtle)] px-4 py-3 text-left font-semibold text-white">{column}</th>)}
+            {block.columns.map((column) => <th key={column} className="border-b border-[rgba(212,175,55,0.24)] px-4 py-3 text-left font-semibold text-[var(--accent-gold)]">{column}</th>)}
           </tr>
         </thead>
         <tbody>
           {block.rows.map((row, rowIndex) => (
-            <tr key={row.join("-") || rowIndex}>
-              {row.map((cell, cellIndex) => <td key={`${cell}-${cellIndex}`} className="border-b border-[rgba(255,255,255,0.05)] px-4 py-3 leading-6 text-[var(--text-secondary)]">{cell}</td>)}
+            <tr key={row.join("-") || rowIndex} className="odd:bg-white/[0.015]">
+              {row.map((cell, cellIndex) => <td key={`${cell}-${cellIndex}`} className="border-b border-[rgba(255,255,255,0.06)] px-4 py-3 leading-6 text-[var(--text-secondary)]">{cell}</td>)}
             </tr>
           ))}
         </tbody>
@@ -231,16 +232,23 @@ function ListBlock({ items, ordered }: { items: string[]; ordered: boolean }) {
 }
 
 function PointsBlock({ block }: { block: Extract<ArticleBlock, { type: "points" }> }) {
+  const style = block.style ?? "bullet";
   return (
     <ul className="grid gap-3">
       {block.items.map((item, index) => (
-        <li key={`${item}-${index}`} className="flex gap-4 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-4 text-[var(--text-secondary)]">
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[rgba(212,175,55,0.24)] bg-[rgba(212,175,55,0.08)] text-sm font-semibold text-[var(--accent-gold)]">{index + 1}</span>
+        <li key={`${item}-${index}`} className="flex gap-4 rounded-2xl border border-[rgba(212,175,55,0.18)] bg-[var(--bg-surface)] p-4 text-[var(--text-secondary)]">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[rgba(212,175,55,0.28)] bg-[rgba(212,175,55,0.08)] text-sm font-semibold text-[var(--accent-gold)]">{pointMarker(style, index)}</span>
           <span className="min-w-0 pt-0.5 text-[17px] leading-8">{item}</span>
         </li>
       ))}
     </ul>
   );
+}
+
+function pointMarker(style: "bullet" | "number" | "letter", index: number) {
+  if (style === "number") return index + 1;
+  if (style === "letter") return String.fromCharCode(65 + (index % 26));
+  return "•";
 }
 
 function ChecklistBlock({ block }: { block: Extract<ArticleBlock, { type: "checklist" }> }) {

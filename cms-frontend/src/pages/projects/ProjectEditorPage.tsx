@@ -59,6 +59,7 @@ import { Textarea } from "@/components/ui/Textarea";
 import { projectCategories, projectSchema, projectStatuses, type ProjectFormValues } from "@/features/projects/projects.schema";
 import { useCreateProject, useProjects, useUpdateProject, useUploadMedia } from "@/features/shared/hooks";
 import { useSaveWorkflow } from "@/hooks/useSaveWorkflow";
+import { createClientId } from "@/lib/utils/createClientId";
 import { toDateInputValue } from "@/lib/utils/formatDate";
 
 type ProjectTab = "details" | "readme" | "screenshots" | "case-study";
@@ -108,13 +109,13 @@ const defaults: ProjectFormValues = {
   publishStatus: "published",
 };
 
-function createClientId() {
-  return `gallery-${crypto.randomUUID()}`;
+function createGalleryClientId() {
+  return createClientId("gallery");
 }
 
 function galleryDraftFromItem(item: GalleryItem): GalleryDraft {
   return {
-    clientId: createClientId(),
+    clientId: createGalleryClientId(),
     url: item.url,
     previewUrl: item.url,
     caption: item.caption ?? "",
@@ -436,7 +437,7 @@ export default function ProjectEditorPage() {
       return;
     }
     const nextItem: GalleryDraft = {
-      clientId: createClientId(),
+      clientId: createGalleryClientId(),
       file,
       previewUrl: URL.createObjectURL(file),
       title: "",

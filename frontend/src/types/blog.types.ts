@@ -106,6 +106,7 @@ export type TableBlock = ArticleBlockBase & {
 export type PointsBlock = ArticleBlockBase & {
   type: "points";
   items: string[];
+  style?: "bullet" | "number" | "letter";
 };
 
 export type ListBlock = ArticleBlockBase & {

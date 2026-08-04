@@ -11,7 +11,7 @@ export type ArticleBlock =
   | { id: string; type: "divider" }
   | { id: string; type: "callout"; variant: "info" | "success" | "warning" | "danger"; title?: string; text: string }
   | { id: string; type: "table"; columns: string[]; rows: string[][] }
-  | { id: string; type: "points"; items: string[] }
+  | { id: string; type: "points"; items: string[]; style?: "bullet" | "number" | "letter" }
   | { id: string; type: "bullet-list"; items: string[] }
   | { id: string; type: "numbered-list"; items: string[] }
   | { id: string; type: "checklist"; items: Array<{ text: string; checked: boolean }> }

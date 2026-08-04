@@ -19,15 +19,17 @@ import {
   Trash2,
   Underline,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ClipboardEvent, type KeyboardEvent } from "react";
 import { useToast } from "@/app/providers/ToastProvider";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
+import { createClientId } from "@/lib/utils/createClientId";
 import type { ArticleBlock } from "@/types/blog.types";
 
 type UploadKind = "image" | "video" | "audio" | "document";
 type TextFormat = "bold" | "italic" | "underline" | "highlight" | "code" | "link";
+type PointsStyle = NonNullable<Extract<ArticleBlock, { type: "points" }>["style"]>;
 type FileArticleBlock = Extract<ArticleBlock, { type: "pdf" | "docx" | "ppt" | "zip" }>;
 type DocumentationArticleBlock = { id: string; type: "documentation"; title: string; description?: string; href: string };
 
@@ -38,9 +40,18 @@ type BuilderProps = {
 };
 
 const documentExtensions = [".pdf", ".doc", ".docx", ".ppt", ".pptx", ".zip"];
+const maxPointItems = 20;
+const maxPointLength = 180;
+const maxTableColumns = 6;
+const maxTableRows = 30;
+const pointStyleOptions: Array<{ value: PointsStyle; label: string }> = [
+  { value: "bullet", label: "Bullet" },
+  { value: "number", label: "Number" },
+  { value: "letter", label: "Letters" },
+];
 
 function makeId(prefix = "block") {
-  return `${prefix}-${crypto.randomUUID()}`;
+  return createClientId(prefix);
 }
 
 function documentTypeFromFileName(fileName: string): "pdf" | "docx" | "ppt" | "zip" | "documentation" {
@@ -56,12 +67,72 @@ function titleFromFileName(fileName: string, fallback: string) {
   return (fileName.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ").trim() || fallback).slice(0, 80);
 }
 
+function normalizeListLine(line: string) {
+  return line.replace(/^\s*(?:[-*•]|\d+[.)])\s+/, "").trim().slice(0, maxPointLength);
+}
+
+function parsePointPaste(text: string) {
+  return text.split(/\r?\n/).map(normalizeListLine).filter(Boolean).slice(0, maxPointItems);
+}
+
+function focusDeferred(node?: HTMLElement | null) {
+  requestAnimationFrame(() => node?.focus());
+}
+
+function parseMarkdownTable(text: string) {
+  const lines = text.split(/\r?\n/).map((line) => line.trim()).filter((line) => line.startsWith("|") && line.endsWith("|"));
+  if (lines.length < 2) return null;
+  const parsed = lines.map((line) => line.slice(1, -1).split("|").map((cell) => cell.trim()));
+  const separatorIndex = parsed.findIndex((row) => row.every((cell) => /^:?-{3,}:?$/.test(cell)));
+  if (separatorIndex !== 1 || !parsed[0]?.length) return null;
+  const columns = parsed[0].slice(0, maxTableColumns).map((column, index) => column || `Column ${index + 1}`);
+  const rows = parsed.slice(2, maxTableRows + 2).map((row) => columns.map((_, index) => row[index] ?? ""));
+  return { columns, rows: rows.length ? rows : [columns.map(() => "")] };
+}
+
+function parseHtmlTable(html: string) {
+  if (!html || typeof DOMParser === "undefined") return null;
+  const table = new DOMParser().parseFromString(html, "text/html").querySelector("table");
+  if (!table) return null;
+  const rows = Array.from(table.querySelectorAll("tr")).map((row) =>
+    Array.from(row.querySelectorAll("th,td")).map((cell) => cell.textContent?.trim() ?? ""),
+  ).filter((row) => row.length);
+  if (!rows.length) return null;
+  const firstRowHasHeaders = Boolean(table.querySelector("th"));
+  const width = Math.min(Math.max(...rows.map((row) => row.length)), maxTableColumns);
+  const columns = (firstRowHasHeaders ? rows[0] : Array.from({ length: width }, (_, index) => `Column ${index + 1}`)).slice(0, width).map((column, index) => column || `Column ${index + 1}`);
+  const bodyRows = (firstRowHasHeaders ? rows.slice(1) : rows).slice(0, maxTableRows).map((row) => columns.map((_, index) => row[index] ?? ""));
+  return { columns, rows: bodyRows.length ? bodyRows : [columns.map(() => "")] };
+}
+
+function parseDelimitedTable(text: string) {
+  const rows = text.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  if (!rows.length) return null;
+  const delimiter = text.includes("\t") ? "\t" : rows.some((row) => row.includes(",")) ? "," : null;
+  if (!delimiter) return null;
+  const parsed = rows.map((row) => row.split(delimiter).map((cell) => cell.trim()));
+  const width = Math.min(Math.max(...parsed.map((row) => row.length)), maxTableColumns);
+  if (width < 2) return null;
+  return {
+    columns: Array.from({ length: width }, (_, index) => `Column ${index + 1}`),
+    rows: parsed.slice(0, maxTableRows).map((row) => Array.from({ length: width }, (_, index) => row[index] ?? "")),
+  };
+}
+
+function parseTablePaste(data: DataTransfer) {
+  return parseHtmlTable(data.getData("text/html")) ?? parseMarkdownTable(data.getData("text/plain")) ?? parseDelimitedTable(data.getData("text/plain"));
+}
+
+function serializeTableForClipboard(columns: string[], rows: string[][]) {
+  return [columns, ...rows].map((row) => row.join("\t")).join("\n");
+}
+
 function createBlock(kind: "heading" | "subheading" | "paragraph" | "points" | "quote" | "code" | "table" | "link"): ArticleBlock {
   const id = makeId(kind);
   if (kind === "heading") return { id, type: "heading", level: 1, text: "Enter heading" };
   if (kind === "subheading") return { id, type: "heading", level: 2, text: "Enter sub heading" };
   if (kind === "paragraph") return { id, type: "paragraph", text: "Start writing..." };
-  if (kind === "points") return { id, type: "points", items: ["First point", "Second point"] };
+  if (kind === "points") return { id, type: "points", items: [""], style: "bullet" };
   if (kind === "quote") return { id, type: "quote", text: "Add quote...", author: "" };
   if (kind === "code") return { id, type: "code", language: "typescript", filename: "", code: "console.log('Hello world');" };
   if (kind === "table") return { id, type: "table", columns: ["Column 1", "Column 2"], rows: [["Value", "Value"]] };
@@ -484,19 +555,43 @@ function PointsEditor({
   onUpdate: (block: ArticleBlock) => void;
 }) {
   const items = block.items.length ? block.items : [""];
+  const style = block.style ?? "bullet";
+  const itemRefs = useRef<Array<HTMLInputElement | null>>([]);
+  const pendingFocusIndex = useRef<number | null>(null);
 
-  function updateItem(index: number, value: string) {
-    onUpdate({ ...block, items: items.map((item, itemIndex) => (itemIndex === index ? value : item)) });
+  useEffect(() => {
+    if (pendingFocusIndex.current === null) return;
+    focusDeferred(itemRefs.current[pendingFocusIndex.current]);
+    pendingFocusIndex.current = null;
+  }, [block.items]);
+
+  function commitItems(nextItems: string[], focusIndex?: number) {
+    const normalized = nextItems.slice(0, maxPointItems).map((item) => item.slice(0, maxPointLength));
+    if (focusIndex !== undefined) {
+      pendingFocusIndex.current = Math.max(0, Math.min(focusIndex, normalized.length - 1));
+    }
+    onUpdate({ ...block, items: normalized.length ? normalized : [""] });
   }
 
-  function addItem() {
-    if (items.length >= 20) return;
-    onUpdate({ ...block, items: [...items, "New point"] });
+  function updateStyle(nextStyle: PointsStyle) {
+    onUpdate({ ...block, style: nextStyle });
+  }
+
+  function updateItem(index: number, value: string) {
+    commitItems(items.map((item, itemIndex) => (itemIndex === index ? value.slice(0, maxPointLength) : item)));
+  }
+
+  function addItem(index = items.length - 1) {
+    if (items.length >= maxPointItems) return;
+    commitItems([...items.slice(0, index + 1), "", ...items.slice(index + 1)], index + 1);
   }
 
   function removeItem(index: number) {
-    if (items.length <= 1) return;
-    onUpdate({ ...block, items: items.filter((_, itemIndex) => itemIndex !== index) });
+    if (items.length <= 1) {
+      commitItems([""], 0);
+      return;
+    }
+    commitItems(items.filter((_, itemIndex) => itemIndex !== index), index - 1);
   }
 
   function moveItem(index: number, direction: -1 | 1) {
@@ -505,7 +600,46 @@ function PointsEditor({
     const next = [...items];
     const [item] = next.splice(index, 1);
     next.splice(target, 0, item);
-    onUpdate({ ...block, items: next });
+    commitItems(next, target);
+  }
+
+  function handleKeyDown(event: KeyboardEvent<HTMLInputElement>, index: number) {
+    const input = event.currentTarget;
+    if (event.key === "Enter") {
+      event.preventDefault();
+      if (items.length >= maxPointItems) return;
+      const start = input.selectionStart ?? input.value.length;
+      const end = input.selectionEnd ?? start;
+      const before = input.value.slice(0, start);
+      const after = input.value.slice(end);
+      commitItems([...items.slice(0, index), before, after, ...items.slice(index + 1)], index + 1);
+      return;
+    }
+    if (event.key === "Backspace" && input.value === "" && items.length > 1) {
+      event.preventDefault();
+      removeItem(index);
+      return;
+    }
+    if (event.key === "ArrowUp" && index > 0) {
+      event.preventDefault();
+      focusDeferred(itemRefs.current[index - 1]);
+      return;
+    }
+    if (event.key === "ArrowDown" && index < items.length - 1) {
+      event.preventDefault();
+      focusDeferred(itemRefs.current[index + 1]);
+    }
+  }
+
+  function handlePaste(event: ClipboardEvent<HTMLInputElement>, index: number) {
+    const pastedItems = parsePointPaste(event.clipboardData.getData("text/plain"));
+    if (!pastedItems.length) return;
+    if (pastedItems.length === 1 && pastedItems[0] === event.clipboardData.getData("text/plain").trim()) return;
+    event.preventDefault();
+    const before = items.slice(0, index);
+    const after = items.slice(index + 1);
+    const next = [...before, ...pastedItems, ...after].slice(0, maxPointItems);
+    commitItems(next, Math.min(index + pastedItems.length - 1, next.length - 1));
   }
 
   return (
@@ -514,12 +648,18 @@ function PointsEditor({
         {items.map((item, index) => (
           <div key={index} className="grid min-w-0 gap-2 rounded-md border border-border-subtle bg-surface p-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
             <Input
-              ref={index === 0 ? fieldRef : undefined}
+              ref={(node) => {
+                itemRefs.current[index] = node;
+                if (index === 0) fieldRef(node);
+              }}
               value={item}
               placeholder={`Point ${index + 1}`}
+              maxLength={maxPointLength}
               onChange={(event) => updateItem(index, event.target.value)}
+              onKeyDown={(event) => handleKeyDown(event, index)}
+              onPaste={(event) => handlePaste(event, index)}
             />
-            <div className="flex items-center justify-end gap-1">
+            <div className="flex items-center justify-end gap-1 opacity-75 transition hover:opacity-100 focus-within:opacity-100">
               <IconButton label="Move point up" disabled={index === 0} onClick={() => moveItem(index, -1)}><ArrowUp size={14} /></IconButton>
               <IconButton label="Move point down" disabled={index === items.length - 1} onClick={() => moveItem(index, 1)}><ArrowDown size={14} /></IconButton>
               <IconButton label="Remove point" disabled={items.length <= 1} onClick={() => removeItem(index)}><Trash2 size={14} /></IconButton>
@@ -527,10 +667,24 @@ function PointsEditor({
           </div>
         ))}
       </div>
-      <div>
-        <Button type="button" size="sm" variant="secondary" disabled={items.length >= 20} onClick={addItem}>
+      <div className="flex flex-wrap items-center gap-3">
+        <Button type="button" size="sm" variant="secondary" disabled={items.length >= maxPointItems} onClick={() => addItem()}>
           <Plus size={14} /> Add point
         </Button>
+        <div className="flex rounded-md border border-border-subtle bg-surface p-1" role="group" aria-label="Point marker style">
+          {pointStyleOptions.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              className={`rounded px-3 py-1.5 text-xs font-semibold transition ${style === option.value ? "bg-accent text-accent-contrast" : "text-secondary hover:bg-surface-hover hover:text-primary"}`}
+              aria-pressed={style === option.value}
+              onClick={() => updateStyle(option.value)}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+        <p className="text-xs text-muted">Enter adds a point. Paste a list to split it automatically.</p>
       </div>
     </div>
   );
@@ -602,24 +756,150 @@ function LinkEditor({
 
 function TableEditor({ block, onUpdate }: { block: Extract<ArticleBlock, { type: "table" }>; onUpdate: (block: ArticleBlock) => void }) {
   const columns = block.columns.length ? block.columns : ["Column 1", "Column 2"];
-  const rows = block.rows.length ? block.rows : [["", ""]];
+  const rows = (block.rows.length ? block.rows : [["", ""]]).map((row) => columns.map((_, index) => row[index] ?? ""));
+  const cellRefs = useRef<Record<string, HTMLTextAreaElement | null>>({});
+  const pendingCellFocus = useRef<{ rowIndex: number; cellIndex: number } | null>(null);
+
+  useEffect(() => {
+    if (!pendingCellFocus.current) return;
+    const { rowIndex, cellIndex } = pendingCellFocus.current;
+    focusDeferred(cellRefs.current[`${rowIndex}:${cellIndex}`]);
+    pendingCellFocus.current = null;
+  }, [columns.length, rows.length]);
+
+  function commitTable(nextColumns: string[], nextRows: string[][], focus?: { rowIndex: number; cellIndex: number }) {
+    const normalizedColumns = nextColumns.slice(0, maxTableColumns).map((column, index) => column || `Column ${index + 1}`);
+    const normalizedRows = nextRows.slice(0, maxTableRows).map((row) => normalizedColumns.map((_, index) => row[index] ?? ""));
+    if (focus) {
+      pendingCellFocus.current = {
+        rowIndex: Math.max(0, Math.min(focus.rowIndex, normalizedRows.length - 1)),
+        cellIndex: Math.max(0, Math.min(focus.cellIndex, normalizedColumns.length - 1)),
+      };
+    }
+    onUpdate({ ...block, columns: normalizedColumns, rows: normalizedRows.length ? normalizedRows : [normalizedColumns.map(() => "")] });
+  }
+
+  function updateColumn(index: number, value: string) {
+    commitTable(columns.map((column, columnIndex) => (columnIndex === index ? value : column)), rows);
+  }
+
+  function updateCell(rowIndex: number, cellIndex: number, value: string) {
+    commitTable(columns, rows.map((row, index) => (index === rowIndex ? columns.map((_, columnIndex) => (columnIndex === cellIndex ? value : row[columnIndex] ?? "")) : row)));
+  }
+
+  function addRow(focusRowIndex = rows.length, focusCellIndex = 0) {
+    if (rows.length >= maxTableRows) return;
+    commitTable(columns, [...rows, columns.map(() => "")], { rowIndex: focusRowIndex, cellIndex: focusCellIndex });
+  }
+
+  function removeRow(index: number) {
+    if (rows.length <= 1) return;
+    commitTable(columns, rows.filter((_, rowIndex) => rowIndex !== index), { rowIndex: Math.max(0, index - 1), cellIndex: 0 });
+  }
+
+  function moveCell(rowIndex: number, cellIndex: number, direction: -1 | 1) {
+    const flatIndex = rowIndex * columns.length + cellIndex + direction;
+    if (flatIndex < 0) return;
+    const nextRowIndex = Math.floor(flatIndex / columns.length);
+    const nextCellIndex = flatIndex % columns.length;
+    if (nextRowIndex >= rows.length) {
+      addRow(rows.length, 0);
+      return;
+    }
+    focusDeferred(cellRefs.current[`${nextRowIndex}:${nextCellIndex}`]);
+  }
+
+  function handleCellKeyDown(event: KeyboardEvent<HTMLTextAreaElement>, rowIndex: number, cellIndex: number) {
+    if (event.key === "Tab") {
+      event.preventDefault();
+      moveCell(rowIndex, cellIndex, event.shiftKey ? -1 : 1);
+      return;
+    }
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      if (rowIndex === rows.length - 1) {
+        addRow(rowIndex + 1, cellIndex);
+        return;
+      }
+      focusDeferred(cellRefs.current[`${rowIndex + 1}:${cellIndex}`]);
+    }
+  }
+
+  function pasteTableAt(parsed: { columns: string[]; rows: string[][] }, rowIndex: number, cellIndex: number) {
+    if (rowIndex === 0 && cellIndex === 0) {
+      commitTable(parsed.columns, parsed.rows, { rowIndex: 0, cellIndex: 0 });
+      return;
+    }
+    const width = Math.min(maxTableColumns, Math.max(columns.length, cellIndex + parsed.columns.length));
+    const nextColumns = Array.from({ length: width }, (_, index) => columns[index] ?? parsed.columns[index - cellIndex] ?? `Column ${index + 1}`);
+    const requiredRows = Math.min(maxTableRows, Math.max(rows.length, rowIndex + parsed.rows.length));
+    const nextRows = Array.from({ length: requiredRows }, (_, targetRowIndex) => {
+      const existing = rows[targetRowIndex] ?? [];
+      const nextRow = nextColumns.map((_, targetCellIndex) => existing[targetCellIndex] ?? "");
+      const pastedRow = parsed.rows[targetRowIndex - rowIndex];
+      if (pastedRow) {
+        pastedRow.forEach((cell, pastedCellIndex) => {
+          const targetCellIndex = cellIndex + pastedCellIndex;
+          if (targetCellIndex < nextColumns.length) nextRow[targetCellIndex] = cell;
+        });
+      }
+      return nextRow;
+    });
+    commitTable(nextColumns, nextRows, { rowIndex, cellIndex });
+  }
+
+  function handlePaste(event: ClipboardEvent<HTMLTextAreaElement>, rowIndex: number, cellIndex: number) {
+    const parsed = parseTablePaste(event.clipboardData);
+    if (!parsed) return;
+    event.preventDefault();
+    pasteTableAt(parsed, rowIndex, cellIndex);
+  }
+
+  function handleCopy(event: ClipboardEvent<HTMLTextAreaElement>) {
+    event.preventDefault();
+    event.clipboardData.setData("text/plain", serializeTableForClipboard(columns, rows));
+  }
+
   return (
-    <div className="grid gap-3">
+    <div className="grid min-w-0 gap-3">
       <div className="overflow-x-auto pb-1">
-        <div className="grid min-w-[520px] gap-2" style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr))` }}>
-          {columns.map((column, index) => <Input key={index} value={column} onChange={(event) => onUpdate({ ...block, columns: columns.map((item, itemIndex) => itemIndex === index ? event.target.value : item) })} />)}
+        <div className="grid min-w-[520px] gap-2" style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr)) 2.25rem` }}>
+          {columns.map((column, index) => (
+            <Input
+              key={index}
+              aria-label={`Column ${index + 1}`}
+              value={column}
+              onChange={(event) => updateColumn(index, event.target.value)}
+            />
+          ))}
+          <span aria-hidden="true" />
         </div>
         {rows.map((row, rowIndex) => (
-          <div key={rowIndex} className="mt-2 grid min-w-[520px] gap-2" style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr))` }}>
-            {columns.map((_, cellIndex) => <Input key={cellIndex} value={row[cellIndex] ?? ""} onChange={(event) => onUpdate({ ...block, rows: rows.map((item, itemIndex) => itemIndex === rowIndex ? columns.map((__, index) => index === cellIndex ? event.target.value : item[index] ?? "") : item) })} />)}
+          <div key={rowIndex} className="mt-2 grid min-w-[520px] gap-2" style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr)) 2.25rem` }}>
+            {columns.map((_, cellIndex) => (
+              <Textarea
+                key={cellIndex}
+                ref={(node) => {
+                  cellRefs.current[`${rowIndex}:${cellIndex}`] = node;
+                }}
+                aria-label={`Cell ${rowIndex + 1}, ${cellIndex + 1}`}
+                value={row[cellIndex] ?? ""}
+                className="min-h-11 resize-y py-2 text-sm leading-5"
+                onChange={(event) => updateCell(rowIndex, cellIndex, event.target.value)}
+                onKeyDown={(event) => handleCellKeyDown(event, rowIndex, cellIndex)}
+                onPaste={(event) => handlePaste(event, rowIndex, cellIndex)}
+                onCopy={handleCopy}
+              />
+            ))}
+            <IconButton label="Remove row" disabled={rows.length <= 1} onClick={() => removeRow(rowIndex)}><Trash2 size={14} /></IconButton>
           </div>
         ))}
       </div>
-      <div className="flex flex-wrap gap-2">
-        <Button type="button" size="sm" variant="secondary" onClick={() => onUpdate({ ...block, rows: [...rows, columns.map(() => "")] })}>Add row</Button>
-        <Button type="button" size="sm" variant="ghost" disabled={rows.length <= 1} onClick={() => onUpdate({ ...block, rows: rows.slice(0, -1) })}>Remove row</Button>
-        <Button type="button" size="sm" variant="secondary" disabled={columns.length >= 6} onClick={() => onUpdate({ ...block, columns: [...columns, `Column ${columns.length + 1}`], rows: rows.map((row) => [...row, ""]) })}>Add column</Button>
-        <Button type="button" size="sm" variant="ghost" disabled={columns.length <= 2} onClick={() => onUpdate({ ...block, columns: columns.slice(0, -1), rows: rows.map((row) => row.slice(0, -1)) })}>Remove column</Button>
+      <div className="flex flex-wrap items-center gap-2">
+        <Button type="button" size="sm" variant="secondary" disabled={rows.length >= maxTableRows} onClick={() => addRow()}>Add row</Button>
+        <Button type="button" size="sm" variant="secondary" disabled={columns.length >= maxTableColumns} onClick={() => commitTable([...columns, `Column ${columns.length + 1}`], rows.map((row) => [...row, ""]))}>Add column</Button>
+        <Button type="button" size="sm" variant="ghost" disabled={columns.length <= 2} onClick={() => commitTable(columns.slice(0, -1), rows.map((row) => row.slice(0, -1)))}>Remove column</Button>
+        <p className="text-xs text-muted">Tab moves cells. Enter moves down. Shift+Enter adds a line inside a cell.</p>
       </div>
     </div>
   );

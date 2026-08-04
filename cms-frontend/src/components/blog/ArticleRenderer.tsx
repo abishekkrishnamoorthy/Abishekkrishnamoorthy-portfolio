@@ -30,7 +30,7 @@ function ArticleBlockRenderer({ block }: { block: ArticleBlock }) {
     case "code":
       return <CodePreview title={block.filename ?? block.language} code={block.code} />;
     case "quote":
-      return <blockquote className="rounded-lg border border-accent/30 bg-accent/10 p-5 text-secondary"><Quote className="mb-3 text-accent" size={22} /><p className="text-lg italic leading-8">{block.text}</p>{block.author ? <footer className="mt-3 text-sm text-muted">{block.author}</footer> : null}</blockquote>;
+      return <QuotePreview block={block} />;
     case "divider":
       return <hr className="border-border-subtle" />;
     case "callout":
@@ -123,21 +123,56 @@ function Callout({ block }: { block: Extract<ArticleBlock, { type: "callout" }> 
   return <div className="rounded-lg border border-accent/20 bg-accent/10 p-5"><div className="flex gap-3"><Icon className="mt-1 text-accent" size={18} /><div>{block.title ? <p className="font-semibold text-primary">{block.title}</p> : null}<p className="text-sm leading-6 text-secondary">{block.text}</p></div></div></div>;
 }
 
+function QuotePreview({ block }: { block: Extract<ArticleBlock, { type: "quote" }> }) {
+  return (
+    <blockquote className="relative overflow-hidden rounded-2xl border border-[rgba(212,175,55,0.22)] bg-[#121318] p-6 shadow-elevation-1">
+      <span className="absolute inset-y-5 left-0 w-1 rounded-r-full bg-[#D4AF37]" aria-hidden="true" />
+      <Quote className="mb-4 h-8 w-8 text-[#D4AF37]" />
+      <p className="text-xl italic leading-9 text-white/90">{block.text}</p>
+      {block.author ? <footer className="mt-4 text-sm text-white/55">— {block.author}</footer> : null}
+    </blockquote>
+  );
+}
+
 function TablePreview({ block }: { block: Extract<ArticleBlock, { type: "table" }> }) {
-  return <div className="overflow-x-auto rounded-lg border border-border-subtle"><table className="w-full min-w-[520px] text-sm"><thead><tr>{block.columns.map((column) => <th key={column} className="border-b border-border-subtle px-4 py-3 text-left text-primary">{column}</th>)}</tr></thead><tbody>{block.rows.map((row, index) => <tr key={index}>{row.map((cell, cellIndex) => <td key={`${index}-${cellIndex}`} className="border-b border-border-subtle px-4 py-3 text-secondary">{cell}</td>)}</tr>)}</tbody></table></div>;
+  return (
+    <div className="overflow-x-auto rounded-2xl border border-[rgba(212,175,55,0.2)] bg-[#121318] shadow-elevation-1">
+      <table className="w-full min-w-[520px] border-collapse text-sm">
+        <thead className="bg-[rgba(212,175,55,0.1)]">
+          <tr>
+            {block.columns.map((column) => <th key={column} className="border-b border-[rgba(212,175,55,0.24)] px-4 py-3 text-left font-semibold text-[#D4AF37]">{column}</th>)}
+          </tr>
+        </thead>
+        <tbody>
+          {block.rows.map((row, index) => (
+            <tr key={index} className="odd:bg-white/[0.015]">
+              {row.map((cell, cellIndex) => <td key={`${index}-${cellIndex}`} className="border-b border-white/[0.06] px-4 py-3 leading-6 text-white/72">{cell}</td>)}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
 }
 
 function PointsPreview({ block }: { block: Extract<ArticleBlock, { type: "points" }> }) {
+  const style = block.style ?? "bullet";
   return (
     <ul className="grid gap-3">
       {block.items.map((item, index) => (
-        <li key={`${item}-${index}`} className="flex gap-3 rounded-lg border border-border-subtle bg-surface-hover px-4 py-3 text-secondary">
-          <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-accent/30 bg-accent/10 text-xs font-semibold text-accent">{index + 1}</span>
+        <li key={`${item}-${index}`} className="flex gap-3 rounded-2xl border border-[rgba(212,175,55,0.18)] bg-[#121318] px-4 py-3 text-white/72">
+          <span className="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[rgba(212,175,55,0.28)] bg-[rgba(212,175,55,0.08)] text-xs font-semibold text-[#D4AF37]">{pointMarker(style, index)}</span>
           <span className="min-w-0 leading-6">{item}</span>
         </li>
       ))}
     </ul>
   );
+}
+
+function pointMarker(style: "bullet" | "number" | "letter", index: number) {
+  if (style === "number") return index + 1;
+  if (style === "letter") return String.fromCharCode(65 + (index % 26));
+  return "•";
 }
 
 function ResourceBlock({ icon, title, description, href, action }: { icon: ReactNode; title: string; description?: string; href?: string; action?: string }) {

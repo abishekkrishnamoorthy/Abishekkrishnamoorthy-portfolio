@@ -6,6 +6,7 @@ const image = z.object({ src: urlSchema, alt: z.string().trim().min(5).max(140),
 const fileShape = { title: z.string().trim().min(3).max(80), description: z.string().trim().max(180).optional(), href: z.string().trim().min(1).max(300) };
 const linkShape = { title: z.string().trim().min(3).max(80), description: z.string().trim().max(180).optional(), href: httpsUrlSchema };
 const editorDocument = z.array(z.record(z.string(), z.unknown())).max(120).optional();
+const pointsStyle = z.enum(["bullet", "number", "letter"]).optional();
 
 export const articleBlockSchema = z.discriminatedUnion("type", [
   blockBase.extend({ type: z.literal("heading"), level: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]), text: z.string().trim().min(3).max(90) }),
@@ -18,7 +19,7 @@ export const articleBlockSchema = z.discriminatedUnion("type", [
   blockBase.extend({ type: z.literal("divider") }),
   blockBase.extend({ type: z.literal("callout"), variant: z.enum(["info", "success", "warning", "danger"]).default("info"), title: z.string().trim().max(80).optional(), text: z.string().trim().min(10).max(500) }),
   blockBase.extend({ type: z.literal("table"), columns: z.array(z.string().trim().min(1).max(40)).min(2).max(6), rows: z.array(z.array(z.string().trim().max(160))).min(1).max(30) }),
-  blockBase.extend({ type: z.literal("points"), items: z.array(z.string().trim().min(1).max(180)).min(1).max(20) }),
+  blockBase.extend({ type: z.literal("points"), items: z.array(z.string().trim().min(1).max(180)).min(1).max(20), style: pointsStyle }),
   blockBase.extend({ type: z.literal("bullet-list"), items: z.array(z.string().trim().min(1).max(180)).min(1).max(20) }),
   blockBase.extend({ type: z.literal("numbered-list"), items: z.array(z.string().trim().min(1).max(180)).min(1).max(20) }),
   blockBase.extend({ type: z.literal("checklist"), items: z.array(z.object({ text: z.string().trim().min(1).max(160), checked: z.boolean() })).min(1).max(20) }),

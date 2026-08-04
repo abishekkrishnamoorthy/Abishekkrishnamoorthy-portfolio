@@ -5,6 +5,7 @@ import { dateStringSchema, httpsUrlSchema, slugSchema, urlSchema } from "@/commo
 const blockBase = z.object({ id: z.string().trim().min(1).max(60) });
 const imageSchema = z.object({ src: urlSchema, alt: z.string().trim().min(5).max(140), caption: z.string().trim().max(140).optional() });
 const editorDocumentSchema = z.array(z.record(z.string(), z.unknown())).max(120).optional();
+const pointsStyleSchema = z.enum(["bullet", "number", "letter"]).optional().default("bullet");
 
 export const headingBlockSchema = blockBase.extend({ type: z.literal("heading"), level: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]), text: z.string().trim().min(3).max(90) });
 export const paragraphBlockSchema = blockBase.extend({ type: z.literal("paragraph"), text: z.string().trim().min(20).max(900) });
@@ -23,7 +24,7 @@ export const quoteBlockSchema = blockBase.extend({ type: z.literal("quote"), tex
 export const dividerBlockSchema = blockBase.extend({ type: z.literal("divider") });
 export const calloutBlockSchema = blockBase.extend({ type: z.literal("callout"), variant: z.enum(calloutVariants).default("info"), title: z.string().trim().max(80).optional(), text: z.string().trim().min(10).max(500) });
 export const tableBlockSchema = blockBase.extend({ type: z.literal("table"), columns: z.array(z.string().trim().min(1).max(40)).min(2).max(6), rows: z.array(z.array(z.string().trim().max(160))).min(1).max(30) });
-export const pointsBlockSchema = blockBase.extend({ type: z.literal("points"), items: z.array(z.string().trim().min(1).max(180)).min(1).max(20) });
+export const pointsBlockSchema = blockBase.extend({ type: z.literal("points"), items: z.array(z.string().trim().min(1).max(180)).min(1).max(20), style: pointsStyleSchema });
 export const bulletListBlockSchema = blockBase.extend({ type: z.literal("bullet-list"), items: z.array(z.string().trim().min(1).max(180)).min(1).max(20) });
 export const numberedListBlockSchema = blockBase.extend({ type: z.literal("numbered-list"), items: z.array(z.string().trim().min(1).max(180)).min(1).max(20) });
 export const checklistBlockSchema = blockBase.extend({ type: z.literal("checklist"), items: z.array(z.object({ text: z.string().trim().min(1).max(160), checked: z.boolean() })).min(1).max(20) });
