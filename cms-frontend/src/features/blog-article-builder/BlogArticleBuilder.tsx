@@ -10,6 +10,7 @@ import {
   Image as ImageIcon,
   Italic,
   Link,
+  List,
   Pilcrow,
   Play,
   Plus,
@@ -55,11 +56,12 @@ function titleFromFileName(fileName: string, fallback: string) {
   return (fileName.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ").trim() || fallback).slice(0, 80);
 }
 
-function createBlock(kind: "heading" | "subheading" | "paragraph" | "quote" | "code" | "table" | "link"): ArticleBlock {
+function createBlock(kind: "heading" | "subheading" | "paragraph" | "points" | "quote" | "code" | "table" | "link"): ArticleBlock {
   const id = makeId(kind);
   if (kind === "heading") return { id, type: "heading", level: 1, text: "Enter heading" };
   if (kind === "subheading") return { id, type: "heading", level: 2, text: "Enter sub heading" };
   if (kind === "paragraph") return { id, type: "paragraph", text: "Start writing..." };
+  if (kind === "points") return { id, type: "points", items: ["First point", "Second point"] };
   if (kind === "quote") return { id, type: "quote", text: "Add quote...", author: "" };
   if (kind === "code") return { id, type: "code", language: "typescript", filename: "", code: "console.log('Hello world');" };
   if (kind === "table") return { id, type: "table", columns: ["Column 1", "Column 2"], rows: [["Value", "Value"]] };
@@ -304,6 +306,7 @@ function ArticleBlockMenu({
         <SidebarButton icon={<span className="text-xs font-bold">H1</span>} label="Heading" onClick={() => addBlock("heading")} />
         <SidebarButton icon={<span className="text-xs font-bold">H2</span>} label="Sub Heading" onClick={() => addBlock("subheading")} />
         <SidebarButton icon={<Pilcrow size={16} />} label="Paragraph" onClick={() => addBlock("paragraph")} />
+        <SidebarButton icon={<List size={16} />} label="Points" onClick={() => addBlock("points")} />
       </SidebarGroup>
       <SidebarGroup title="Content">
         <SidebarButton icon={<Quote size={16} />} label="Quote" onClick={() => addBlock("quote")} />
@@ -443,6 +446,8 @@ function EditableBlock(props: {
         </div>
       ) : block.type === "table" ? (
         <TableEditor block={block} onUpdate={onUpdate} />
+      ) : block.type === "points" ? (
+        <PointsEditor block={block} fieldRef={setInputRef} onUpdate={onUpdate} />
       ) : block.type === "image" ? (
         <MediaEditor preview={<ImageMediaPreview src={block.src} alt={block.alt} />} onReplace={() => onReplace("image")}>
           <Input ref={setInputRef} value={block.alt} placeholder="Alt text" onChange={(event) => onUpdate({ ...block, alt: event.target.value })} />
@@ -466,6 +471,68 @@ function EditableBlock(props: {
         <p className="text-sm text-muted">This legacy block remains supported in preview but is not editable in the new builder.</p>
       )}
     </BlockShell>
+  );
+}
+
+function PointsEditor({
+  block,
+  fieldRef,
+  onUpdate,
+}: {
+  block: Extract<ArticleBlock, { type: "points" }>;
+  fieldRef: (node: HTMLInputElement | null) => void;
+  onUpdate: (block: ArticleBlock) => void;
+}) {
+  const items = block.items.length ? block.items : [""];
+
+  function updateItem(index: number, value: string) {
+    onUpdate({ ...block, items: items.map((item, itemIndex) => (itemIndex === index ? value : item)) });
+  }
+
+  function addItem() {
+    if (items.length >= 20) return;
+    onUpdate({ ...block, items: [...items, "New point"] });
+  }
+
+  function removeItem(index: number) {
+    if (items.length <= 1) return;
+    onUpdate({ ...block, items: items.filter((_, itemIndex) => itemIndex !== index) });
+  }
+
+  function moveItem(index: number, direction: -1 | 1) {
+    const target = index + direction;
+    if (target < 0 || target >= items.length) return;
+    const next = [...items];
+    const [item] = next.splice(index, 1);
+    next.splice(target, 0, item);
+    onUpdate({ ...block, items: next });
+  }
+
+  return (
+    <div className="grid min-w-0 gap-3">
+      <div className="grid min-w-0 gap-2">
+        {items.map((item, index) => (
+          <div key={index} className="grid min-w-0 gap-2 rounded-md border border-border-subtle bg-surface p-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+            <Input
+              ref={index === 0 ? fieldRef : undefined}
+              value={item}
+              placeholder={`Point ${index + 1}`}
+              onChange={(event) => updateItem(index, event.target.value)}
+            />
+            <div className="flex items-center justify-end gap-1">
+              <IconButton label="Move point up" disabled={index === 0} onClick={() => moveItem(index, -1)}><ArrowUp size={14} /></IconButton>
+              <IconButton label="Move point down" disabled={index === items.length - 1} onClick={() => moveItem(index, 1)}><ArrowDown size={14} /></IconButton>
+              <IconButton label="Remove point" disabled={items.length <= 1} onClick={() => removeItem(index)}><Trash2 size={14} /></IconButton>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div>
+        <Button type="button" size="sm" variant="secondary" disabled={items.length >= 20} onClick={addItem}>
+          <Plus size={14} /> Add point
+        </Button>
+      </div>
+    </div>
   );
 }
 

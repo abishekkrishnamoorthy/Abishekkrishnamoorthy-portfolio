@@ -9,6 +9,7 @@ export type ArticleBlockType =
   | "divider"
   | "callout"
   | "table"
+  | "points"
   | "bullet-list"
   | "numbered-list"
   | "checklist"
@@ -102,6 +103,11 @@ export type TableBlock = ArticleBlockBase & {
   rows: string[][];
 };
 
+export type PointsBlock = ArticleBlockBase & {
+  type: "points";
+  items: string[];
+};
+
 export type ListBlock = ArticleBlockBase & {
   type: "bullet-list" | "numbered-list";
   items: string[];
@@ -180,6 +186,7 @@ export type ArticleBlock =
   | DividerBlock
   | CalloutBlock
   | TableBlock
+  | PointsBlock
   | ListBlock
   | ChecklistBlock
   | FileBlock

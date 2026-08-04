@@ -48,6 +48,8 @@ function ArticleBlockRenderer({ block, onLightbox }: { block: ArticleBlock; onLi
       return <CalloutBlock block={block} />;
     case "table":
       return <TableBlock block={block} />;
+    case "points":
+      return <PointsBlock block={block} />;
     case "bullet-list":
       return <ListBlock items={block.items} ordered={false} />;
     case "numbered-list":
@@ -225,6 +227,19 @@ function ListBlock({ items, ordered }: { items: string[]; ordered: boolean }) {
     <List className={cn("space-y-3 pl-5 text-[17px] leading-8 text-[var(--text-secondary)] marker:text-[var(--accent-gold)]", ordered ? "list-decimal" : "list-disc")}>
       {items.map((item) => <li key={item}>{item}</li>)}
     </List>
+  );
+}
+
+function PointsBlock({ block }: { block: Extract<ArticleBlock, { type: "points" }> }) {
+  return (
+    <ul className="grid gap-3">
+      {block.items.map((item, index) => (
+        <li key={`${item}-${index}`} className="flex gap-4 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-4 text-[var(--text-secondary)]">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[rgba(212,175,55,0.24)] bg-[rgba(212,175,55,0.08)] text-sm font-semibold text-[var(--accent-gold)]">{index + 1}</span>
+          <span className="min-w-0 pt-0.5 text-[17px] leading-8">{item}</span>
+        </li>
+      ))}
+    </ul>
   );
 }
 

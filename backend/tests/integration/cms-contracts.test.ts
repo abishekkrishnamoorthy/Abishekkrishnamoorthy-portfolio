@@ -102,6 +102,9 @@ describe("CMS API contracts", () => {
   it("validates blog blocks and contact message payloads", async () => {
     const headers = await authHeader();
     await request(app()).post("/api/cms/blogs").set(headers).send({ ...articlePayload(), blocks: [{ id: "bad", type: "paragraph", text: "Too short" }] }).expect(400);
+    const pointsArticle = await request(app()).post("/api/cms/blogs").set(headers).send({ ...articlePayload("points-article"), blocks: [{ id: "points", type: "points", items: ["Plan the implementation", "Verify public rendering"] }] }).expect(201);
+    expect(pointsArticle.body.data.blocks[0]).toMatchObject({ type: "points", items: ["Plan the implementation", "Verify public rendering"] });
+    await request(app()).post("/api/cms/blogs").set(headers).send({ ...articlePayload("bad-points-article"), blocks: [{ id: "points", type: "points", items: [""] }] }).expect(400);
     await request(app()).post("/api/contact/messages").send({ name: "A", email: "not-email", subject: "Hi", message: "Short" }).expect(400);
   });
 

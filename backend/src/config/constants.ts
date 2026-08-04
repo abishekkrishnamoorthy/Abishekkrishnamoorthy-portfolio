@@ -16,6 +16,7 @@ export const articleBlockTypes = [
   "divider",
   "callout",
   "table",
+  "points",
   "bullet-list",
   "numbered-list",
   "checklist",

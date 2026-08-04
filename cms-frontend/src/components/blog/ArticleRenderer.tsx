@@ -37,6 +37,8 @@ function ArticleBlockRenderer({ block }: { block: ArticleBlock }) {
       return <Callout block={block} />;
     case "table":
       return <TablePreview block={block} />;
+    case "points":
+      return <PointsPreview block={block} />;
     case "bullet-list":
       return <ul className="list-disc space-y-2 pl-5 text-secondary">{block.items.map((item) => <li key={item}>{item}</li>)}</ul>;
     case "numbered-list":
@@ -123,6 +125,19 @@ function Callout({ block }: { block: Extract<ArticleBlock, { type: "callout" }> 
 
 function TablePreview({ block }: { block: Extract<ArticleBlock, { type: "table" }> }) {
   return <div className="overflow-x-auto rounded-lg border border-border-subtle"><table className="w-full min-w-[520px] text-sm"><thead><tr>{block.columns.map((column) => <th key={column} className="border-b border-border-subtle px-4 py-3 text-left text-primary">{column}</th>)}</tr></thead><tbody>{block.rows.map((row, index) => <tr key={index}>{row.map((cell, cellIndex) => <td key={`${index}-${cellIndex}`} className="border-b border-border-subtle px-4 py-3 text-secondary">{cell}</td>)}</tr>)}</tbody></table></div>;
+}
+
+function PointsPreview({ block }: { block: Extract<ArticleBlock, { type: "points" }> }) {
+  return (
+    <ul className="grid gap-3">
+      {block.items.map((item, index) => (
+        <li key={`${item}-${index}`} className="flex gap-3 rounded-lg border border-border-subtle bg-surface-hover px-4 py-3 text-secondary">
+          <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-accent/30 bg-accent/10 text-xs font-semibold text-accent">{index + 1}</span>
+          <span className="min-w-0 leading-6">{item}</span>
+        </li>
+      ))}
+    </ul>
+  );
 }
 
 function ResourceBlock({ icon, title, description, href, action }: { icon: ReactNode; title: string; description?: string; href?: string; action?: string }) {

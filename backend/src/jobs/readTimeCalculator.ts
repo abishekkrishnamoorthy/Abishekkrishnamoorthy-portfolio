@@ -9,6 +9,7 @@ function blockText(block: z.infer<typeof articleBlockSchema>): string {
       return block.text;
     case "callout":
       return `${block.title ?? ""} ${block.text}`;
+    case "points":
     case "bullet-list":
     case "numbered-list":
       return block.items.join(" ");

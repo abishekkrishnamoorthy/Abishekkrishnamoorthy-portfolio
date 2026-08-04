@@ -23,6 +23,7 @@ export const quoteBlockSchema = blockBase.extend({ type: z.literal("quote"), tex
 export const dividerBlockSchema = blockBase.extend({ type: z.literal("divider") });
 export const calloutBlockSchema = blockBase.extend({ type: z.literal("callout"), variant: z.enum(calloutVariants).default("info"), title: z.string().trim().max(80).optional(), text: z.string().trim().min(10).max(500) });
 export const tableBlockSchema = blockBase.extend({ type: z.literal("table"), columns: z.array(z.string().trim().min(1).max(40)).min(2).max(6), rows: z.array(z.array(z.string().trim().max(160))).min(1).max(30) });
+export const pointsBlockSchema = blockBase.extend({ type: z.literal("points"), items: z.array(z.string().trim().min(1).max(180)).min(1).max(20) });
 export const bulletListBlockSchema = blockBase.extend({ type: z.literal("bullet-list"), items: z.array(z.string().trim().min(1).max(180)).min(1).max(20) });
 export const numberedListBlockSchema = blockBase.extend({ type: z.literal("numbered-list"), items: z.array(z.string().trim().min(1).max(180)).min(1).max(20) });
 export const checklistBlockSchema = blockBase.extend({ type: z.literal("checklist"), items: z.array(z.object({ text: z.string().trim().min(1).max(160), checked: z.boolean() })).min(1).max(20) });
@@ -56,6 +57,7 @@ export const articleBlockSchema = z.discriminatedUnion("type", [
   dividerBlockSchema,
   calloutBlockSchema,
   tableBlockSchema,
+  pointsBlockSchema,
   bulletListBlockSchema,
   numberedListBlockSchema,
   checklistBlockSchema,
