@@ -1,5 +1,7 @@
 # Home Page Frontend-First API Contract
 
+Deployment trigger note: this frontend documentation change is safe and does not alter runtime behavior.
+
 This document analyzes the current Home page implementation and defines the backend data contract based on what the frontend actually renders today.
 
 It does not propose backend code, database models, or routes beyond the recommended response shape.
