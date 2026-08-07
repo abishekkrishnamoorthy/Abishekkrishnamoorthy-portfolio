@@ -14,11 +14,11 @@ function hashToken(token: string) {
 }
 
 function signAccessToken(payload: TokenPayload) {
-  return jwt.sign(payload, env.JWT_ACCESS_SECRET, { expiresIn: "15m" });
+  return jwt.sign(payload, env.JWT_ACCESS_SECRET, { expiresIn: "1d" });
 }
 
 function signRefreshToken(payload: TokenPayload & { familyId: string }) {
-  return jwt.sign(payload, env.JWT_REFRESH_SECRET, { expiresIn: "30d" });
+  return jwt.sign(payload, env.JWT_REFRESH_SECRET, { expiresIn: "1d" });
 }
 
 function roleName(user: Awaited<ReturnType<typeof usersRepository.findByEmail>>) {
@@ -40,7 +40,7 @@ export const authService = {
       userId: user.id,
       tokenHash: hashToken(refreshToken),
       familyId,
-      expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
     });
     return { accessToken, refreshToken, user: { id: user.id, name: user.name, email: user.email, role: payload.role } };
   },
@@ -65,7 +65,7 @@ export const authService = {
       userId: user.id,
       tokenHash: hashToken(nextRefreshToken),
       familyId: decoded.familyId,
-      expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
     });
     return { accessToken: signAccessToken(payload), refreshToken: nextRefreshToken };
   },
